@@ -1,5 +1,5 @@
--- [[ AIMBOT — Клавиша F ]]
--- Нажми F — камера наводится на ближайшего игрока
+-- [[ AIMBOT — Минимальный интерфейс ]]
+-- F — наведение на ближайшего игрока (без себя)
 
 local Player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -16,14 +16,16 @@ local AimKey = Enum.KeyCode.F
 
 -- ===== GUI =====
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "AimbotGUI"
+ScreenGui.Name = "Aimbot"
 ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 
+-- Компактное окно
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 300, 0, 180)
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -90)
-MainFrame.BackgroundColor3 = Color3.fromRGB(8, 10, 20)
+MainFrame.Size = UDim2.new(0, 180, 0, 70)
+MainFrame.Position = UDim2.new(0.5, -90, 0.85, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+MainFrame.BackgroundTransparency = 0.15
 MainFrame.BorderSizePixel = 0
 MainFrame.ClipsDescendants = true
 MainFrame.Active = true
@@ -31,90 +33,76 @@ MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
 
 local Corner = Instance.new("UICorner")
-Corner.CornerRadius = UDim.new(0, 14)
+Corner.CornerRadius = UDim.new(0, 10)
 Corner.Parent = MainFrame
 
--- ===== ШАПКА =====
-local TitleBar = Instance.new("Frame")
-TitleBar.Size = UDim2.new(1, 0, 0, 46)
-TitleBar.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-TitleBar.BorderSizePixel = 0
-TitleBar.Parent = MainFrame
+-- Тонкая полоска сверху
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 3)
+TopBar.Position = UDim2.new(0, 0, 0, 0)
+TopBar.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+TopBar.BorderSizePixel = 0
+TopBar.Parent = MainFrame
 
-local TitleCorner = Instance.new("UICorner")
-TitleCorner.CornerRadius = UDim.new(0, 14)
-TitleCorner.Parent = TitleBar
+local TopCorner = Instance.new("UICorner")
+TopCorner.CornerRadius = UDim.new(0, 10)
+TopCorner.Parent = TopBar
 
-local TitleText = Instance.new("TextLabel")
-TitleText.Size = UDim2.new(0.6, 0, 1, 0)
-TitleText.Position = UDim2.new(0.05, 0, 0, 0)
-TitleText.Text = "🎯 AIMBOT"
-TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleText.TextSize = 18
-TitleText.TextXAlignment = Enum.TextXAlignment.Left
-TitleText.BackgroundTransparency = 1
-TitleText.Font = Enum.Font.GothamBold
-TitleText.Parent = TitleBar
+-- Название
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 20)
+Title.Position = UDim2.new(0, 0, 0, 8)
+Title.Text = "AIMBOT"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 13
+Title.TextXAlignment = Enum.TextXAlignment.Center
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.GothamBold
+Title.Parent = MainFrame
 
-local MinBtn = Instance.new("TextButton")
-MinBtn.Size = UDim2.new(0, 30, 0, 30)
-MinBtn.Position = UDim2.new(0.86, 0, 0.08, 0)
-MinBtn.Text = "─"
-MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-MinBtn.TextSize = 20
-MinBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 100)
-MinBtn.BorderSizePixel = 0
-MinBtn.Parent = TitleBar
-local MinCorner = Instance.new("UICorner")
-MinCorner.CornerRadius = UDim.new(0, 6)
-MinCorner.Parent = MinBtn
-
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(0.93, 0, 0.08, 0)
-CloseBtn.Text = "✕"
-CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.TextSize = 16
-CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 80)
-CloseBtn.BorderSizePixel = 0
-CloseBtn.Parent = TitleBar
-local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0, 6)
-CloseCorner.Parent = CloseBtn
-
--- ===== КОНТЕНТ =====
-local Content = Instance.new("Frame")
-Content.Size = UDim2.new(1, 0, 1, -46)
-Content.Position = UDim2.new(0, 0, 0, 46)
-Content.BackgroundTransparency = 1
-Content.Parent = MainFrame
-
-local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0.85, 0, 0, 45)
-ToggleBtn.Position = UDim2.new(0.075, 0, 0.1, 0)
-ToggleBtn.Text = "ВКЛЮЧИТЬ АИМБОТ"
-ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleBtn.TextSize = 16
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-ToggleBtn.BorderSizePixel = 0
-ToggleBtn.Font = Enum.Font.GothamSemibold
-ToggleBtn.Parent = Content
-local ToggleCorner = Instance.new("UICorner")
-ToggleCorner.CornerRadius = UDim.new(0, 10)
-ToggleCorner.Parent = ToggleBtn
-
+-- Статус
 local StatusText = Instance.new("TextLabel")
-StatusText.Size = UDim2.new(0.9, 0, 0, 25)
-StatusText.Position = UDim2.new(0.05, 0, 0.7, 0)
-StatusText.Text = "🔴 ВЫКЛЮЧЕН"
+StatusText.Size = UDim2.new(1, 0, 0, 16)
+StatusText.Position = UDim2.new(0, 0, 0, 26)
+StatusText.Text = "● ВЫКЛ"
 StatusText.TextColor3 = Color3.fromRGB(200, 80, 80)
-StatusText.TextSize = 14
+StatusText.TextSize = 11
 StatusText.TextXAlignment = Enum.TextXAlignment.Center
 StatusText.BackgroundTransparency = 1
 StatusText.Font = Enum.Font.Gotham
-StatusText.Parent = Content
+StatusText.Parent = MainFrame
 
--- ===== ФУНКЦИЯ ПОИСКА БЛИЖАЙШЕГО ИГРОКА =====
+-- Кнопка включения
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(0.8, 0, 0, 22)
+ToggleBtn.Position = UDim2.new(0.1, 0, 0.65, 0)
+ToggleBtn.Text = "ВКЛЮЧИТЬ"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.TextSize = 11
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+ToggleBtn.BorderSizePixel = 0
+ToggleBtn.Font = Enum.Font.GothamSemibold
+ToggleBtn.Parent = MainFrame
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(0, 6)
+ToggleCorner.Parent = ToggleBtn
+
+-- Маленький крестик в углу
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 18, 0, 18)
+CloseBtn.Position = UDim2.new(1, -22, 0, 4)
+CloseBtn.Text = "✕"
+CloseBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+CloseBtn.TextSize = 12
+CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+CloseBtn.BorderSizePixel = 0
+CloseBtn.Font = Enum.Font.Gotham
+CloseBtn.Parent = MainFrame
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 4)
+CloseCorner.Parent = CloseBtn
+
+-- ===== ФУНКЦИЯ ПОИСКА =====
 local function GetClosestPlayer()
     local closestPlayer = nil
     local closestDist = MaxDistance
@@ -131,7 +119,6 @@ local function GetClosestPlayer()
             if char then
                 local humanoid = char:FindFirstChild("Humanoid")
                 local head = char:FindFirstChild("Head")
-                
                 if head and humanoid and humanoid.Health > 0 then
                     local dist = (head.Position - myRoot.Position).Magnitude
                     if dist < closestDist then
@@ -143,31 +130,26 @@ local function GetClosestPlayer()
             end
         end
     end
-    
     return closestPlayer, closestPart
 end
 
 -- ===== ОСНОВНОЙ ЦИКЛ =====
 RunService.RenderStepped:Connect(function()
-    if not AimbotActive then return end
-    if not IsAiming then return end
-    
+    if not AimbotActive or not IsAiming then return end
     local target, targetPart = GetClosestPlayer()
     if target and targetPart then
-        local targetPos = targetPart.Position
         local currentCFrame = Camera.CFrame
-        local lookAt = CFrame.lookAt(currentCFrame.Position, targetPos)
+        local lookAt = CFrame.lookAt(currentCFrame.Position, targetPart.Position)
         Camera.CFrame = currentCFrame:Lerp(lookAt, Smoothness)
     end
 end)
 
 -- ===== КЛАВИША F =====
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == AimKey then
-        if not AimbotActive then return end
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.KeyCode == AimKey and AimbotActive then
         IsAiming = true
-        StatusText.Text = "🎯 НАВОДКА АКТИВНА"
+        StatusText.Text = "● НАВОДКА"
         StatusText.TextColor3 = Color3.fromRGB(100, 200, 255)
     end
 end)
@@ -176,41 +158,34 @@ UserInputService.InputEnded:Connect(function(input)
     if input.KeyCode == AimKey then
         IsAiming = false
         if AimbotActive then
-            StatusText.Text = "🟢 АИМБОТ ВКЛЮЧЕН"
+            StatusText.Text = "● ВКЛ"
             StatusText.TextColor3 = Color3.fromRGB(100, 200, 100)
         end
     end
 end)
 
--- ===== КНОПКА ВКЛЮЧЕНИЯ =====
+-- ===== КНОПКА =====
 ToggleBtn.MouseButton1Click:Connect(function()
     AimbotActive = not AimbotActive
-    
     if AimbotActive then
-        ToggleBtn.Text = "ВЫКЛЮЧИТЬ АИМБОТ"
+        ToggleBtn.Text = "ВЫКЛЮЧИТЬ"
         ToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
-        StatusText.Text = "🟢 АИМБОТ ВКЛЮЧЕН (F)"
+        TopBar.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
+        StatusText.Text = "● ВКЛ (F)"
         StatusText.TextColor3 = Color3.fromRGB(100, 200, 100)
     else
-        ToggleBtn.Text = "ВКЛЮЧИТЬ АИМБОТ"
+        ToggleBtn.Text = "ВКЛЮЧИТЬ"
         ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-        StatusText.Text = "🔴 ВЫКЛЮЧЕН"
+        TopBar.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+        StatusText.Text = "● ВЫКЛ"
         StatusText.TextColor3 = Color3.fromRGB(200, 80, 80)
         IsAiming = false
     end
 end)
 
--- ===== УПРАВЛЕНИЕ ОКНОМ =====
-MinBtn.MouseButton1Click:Connect(function()
-    Minimized = not Minimized
-    Content.Visible = not Minimized
-    MinBtn.Text = Minimized and "+" or "─"
-    MainFrame.Size = Minimized and UDim2.new(0, 300, 0, 46) or UDim2.new(0, 300, 0, 180)
-end)
-
+-- ===== ЗАКРЫТИЕ =====
 CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
-print("✅ AIMBOT загружен!")
-print("🎯 Нажми F для наведения на ближайшего игрока")
+print("✅ AIMBOT загружен! F — наведение")
