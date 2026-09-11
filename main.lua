@@ -1,6 +1,5 @@
 -- [[ AIMBOT — Наведение на ближайшего игрока ]]
--- При зажатии LShift — камера наводится на голову ближайшего ИГРОКА (кроме себя)
--- Игра от первого лица
+-- LeftAlt — наведение на голову ближайшего игрока (без себя)
 
 local Player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -10,9 +9,10 @@ local Camera = workspace.CurrentCamera
 -- ===== НАСТРОЙКИ =====
 local AimbotActive = false
 local IsAiming = false
-local MaxDistance = 500
-local Smoothness = 0.3
+local MaxDistance = 1000
+local Smoothness = 0.6 -- Чем больше — тем быстрее (0.1 = медленно, 1 = мгновенно)
 local Minimized = false
+local AimKey = Enum.KeyCode.LeftAlt
 
 -- ===== GUI =====
 local ScreenGui = Instance.new("ScreenGui")
@@ -131,15 +131,14 @@ local function GetClosestPlayer()
             local char = otherPlayer.Character
             if char then
                 local humanoid = char:FindFirstChild("Humanoid")
-                -- Ищем голову, если нет — HumanoidRootPart
-                local targetPart = char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
+                local head = char:FindFirstChild("Head")
                 
-                if targetPart and humanoid and humanoid.Health > 0 then
-                    local dist = (targetPart.Position - myRoot.Position).Magnitude
+                if head and humanoid and humanoid.Health > 0 then
+                    local dist = (head.Position - myRoot.Position).Magnitude
                     if dist < closestDist then
                         closestDist = dist
                         closestPlayer = otherPlayer
-                        closestPart = targetPart
+                        closestPart = head
                     end
                 end
             end
@@ -149,25 +148,29 @@ local function GetClosestPlayer()
     return closestPlayer, closestPart
 end
 
--- ===== ОСНОВНОЙ ЦИКЛ =====
+-- ===== ОСНОВНОЙ ЦИКЛ (RenderStepped для плавности) =====
 RunService.RenderStepped:Connect(function()
     if not AimbotActive then return end
     if not IsAiming then return end
     
     local target, targetPart = GetClosestPlayer()
     if target and targetPart then
+        -- Мгновенно берём позицию головы цели
         local targetPos = targetPart.Position
         local currentCFrame = Camera.CFrame
         
+        -- Создаём CFrame, смотрящий точно на цель
         local lookAt = CFrame.lookAt(currentCFrame.Position, targetPos)
+        
+        -- Плавная интерполяция (чем выше Smoothness — тем быстрее)
         Camera.CFrame = currentCFrame:Lerp(lookAt, Smoothness)
     end
 end)
 
--- ===== LSHIFT =====
+-- ===== ОБРАБОТКА LALT =====
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.LeftShift then
+    if input.KeyCode == AimKey then
         IsAiming = true
         if AimbotActive then
             StatusText.Text = "🎯 НАВОДКА АКТИВНА"
@@ -177,7 +180,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.LeftShift then
+    if input.KeyCode == AimKey then
         IsAiming = false
         if AimbotActive then
             StatusText.Text = "🟢 АИМБОТ ВКЛЮЧЕН"
@@ -216,4 +219,4 @@ CloseBtn.MouseButton1Click:Connect(function()
 end)
 
 print("✅ AIMBOT загружен!")
-print("🎯 LShift — наведение на ближайшего игрока (без своей головы)")
+print("🎯 LeftAlt — наведение на ближайшего игрока")
