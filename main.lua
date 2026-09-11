@@ -1,5 +1,4 @@
--- [[ AIMBOT — Минимальный интерфейс ]]
--- F — наведение на ближайшего игрока (без себя)
+-- [[ AIMBOT — Нажал F = следует, нажал снова = выкл ]]
 
 local Player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -8,10 +7,9 @@ local Camera = workspace.CurrentCamera
 
 -- ===== НАСТРОЙКИ =====
 local AimbotActive = false
-local IsAiming = false
+local IsFollowing = false
 local MaxDistance = 1000
 local Smoothness = 0.6
-local Minimized = false
 local AimKey = Enum.KeyCode.F
 
 -- ===== GUI =====
@@ -20,7 +18,6 @@ ScreenGui.Name = "Aimbot"
 ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 
--- Компактное окно
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 180, 0, 70)
 MainFrame.Position = UDim2.new(0.5, -90, 0.85, 0)
@@ -36,7 +33,6 @@ local Corner = Instance.new("UICorner")
 Corner.CornerRadius = UDim.new(0, 10)
 Corner.Parent = MainFrame
 
--- Тонкая полоска сверху
 local TopBar = Instance.new("Frame")
 TopBar.Size = UDim2.new(1, 0, 0, 3)
 TopBar.Position = UDim2.new(0, 0, 0, 0)
@@ -48,7 +44,6 @@ local TopCorner = Instance.new("UICorner")
 TopCorner.CornerRadius = UDim.new(0, 10)
 TopCorner.Parent = TopBar
 
--- Название
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 20)
 Title.Position = UDim2.new(0, 0, 0, 8)
@@ -60,7 +55,6 @@ Title.BackgroundTransparency = 1
 Title.Font = Enum.Font.GothamBold
 Title.Parent = MainFrame
 
--- Статус
 local StatusText = Instance.new("TextLabel")
 StatusText.Size = UDim2.new(1, 0, 0, 16)
 StatusText.Position = UDim2.new(0, 0, 0, 26)
@@ -72,7 +66,6 @@ StatusText.BackgroundTransparency = 1
 StatusText.Font = Enum.Font.Gotham
 StatusText.Parent = MainFrame
 
--- Кнопка включения
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0.8, 0, 0, 22)
 ToggleBtn.Position = UDim2.new(0.1, 0, 0.65, 0)
@@ -87,7 +80,6 @@ local ToggleCorner = Instance.new("UICorner")
 ToggleCorner.CornerRadius = UDim.new(0, 6)
 ToggleCorner.Parent = ToggleBtn
 
--- Маленький крестик в углу
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 18, 0, 18)
 CloseBtn.Position = UDim2.new(1, -22, 0, 4)
@@ -133,9 +125,9 @@ local function GetClosestPlayer()
     return closestPlayer, closestPart
 end
 
--- ===== ОСНОВНОЙ ЦИКЛ =====
+-- ===== ОСНОВНОЙ ЦИКЛ (следит всегда, пока включено) =====
 RunService.RenderStepped:Connect(function()
-    if not AimbotActive or not IsAiming then return end
+    if not IsFollowing then return end
     local target, targetPart = GetClosestPlayer()
     if target and targetPart then
         local currentCFrame = Camera.CFrame
@@ -144,42 +136,38 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ===== КЛАВИША F =====
+-- ===== КЛАВИША F — ПЕРЕКЛЮЧАТЕЛЬ =====
 UserInputService.InputBegan:Connect(function(input, gp)
     if gp then return end
-    if input.KeyCode == AimKey and AimbotActive then
-        IsAiming = true
-        StatusText.Text = "● НАВОДКА"
-        StatusText.TextColor3 = Color3.fromRGB(100, 200, 255)
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
     if input.KeyCode == AimKey then
-        IsAiming = false
-        if AimbotActive then
-            StatusText.Text = "● ВКЛ"
-            StatusText.TextColor3 = Color3.fromRGB(100, 200, 100)
+        IsFollowing = not IsFollowing
+        if IsFollowing then
+            StatusText.Text = "● СЛЕЖУ"
+            StatusText.TextColor3 = Color3.fromRGB(100, 200, 255)
+            TopBar.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
+        else
+            StatusText.Text = "● ВЫКЛ"
+            StatusText.TextColor3 = Color3.fromRGB(200, 80, 80)
+            TopBar.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
         end
     end
 end)
 
--- ===== КНОПКА =====
+-- ===== КНОПКА ВКЛЮЧЕНИЯ =====
 ToggleBtn.MouseButton1Click:Connect(function()
-    AimbotActive = not AimbotActive
-    if AimbotActive then
+    IsFollowing = not IsFollowing
+    if IsFollowing then
         ToggleBtn.Text = "ВЫКЛЮЧИТЬ"
         ToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
-        TopBar.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
-        StatusText.Text = "● ВКЛ (F)"
-        StatusText.TextColor3 = Color3.fromRGB(100, 200, 100)
+        TopBar.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
+        StatusText.Text = "● СЛЕЖУ"
+        StatusText.TextColor3 = Color3.fromRGB(100, 200, 255)
     else
         ToggleBtn.Text = "ВКЛЮЧИТЬ"
         ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
         TopBar.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
         StatusText.Text = "● ВЫКЛ"
         StatusText.TextColor3 = Color3.fromRGB(200, 80, 80)
-        IsAiming = false
     end
 end)
 
@@ -188,4 +176,4 @@ CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
-print("✅ AIMBOT загружен! F — наведение")
+print("✅ AIMBOT загружен! Нажми F — слежение, нажми снова — выкл")
