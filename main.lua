@@ -1,5 +1,5 @@
 -- [[ AIMBOT для Murder Duels ]]
--- Зажми правую кнопку мыши (ПКМ) — прицел наводится на голову врага
+-- Зажми СРЕДНЮЮ кнопку мыши (колесо) — прицел наводится на голову врага
 -- Автор игры: breakfast
 
 local Player = game.Players.LocalPlayer
@@ -8,11 +8,10 @@ local UserInputService = game:GetService("UserInputService")
 local Camera = workspace.CurrentCamera
 
 -- ===== НАСТРОЙКИ =====
-local AimbotActive = true      -- аимбот всегда включён (можно выключить кнопкой)
-local IsAiming = false          -- зажата ли ПКМ
-local MaxDistance = 1000        -- максимальная дистанция поиска
-local Smoothness = 0.35         -- плавность (0.1 = медленно, 1 = мгновенно)
-local Minimized = false
+local AimbotActive = true
+local IsAiming = false
+local MaxDistance = 1000
+local Smoothness = 0.35
 
 -- ===== GUI =====
 local ScreenGui = Instance.new("ScreenGui")
@@ -38,7 +37,7 @@ Corner.Parent = MainFrame
 local TopBar = Instance.new("Frame")
 TopBar.Size = UDim2.new(1, 0, 0, 3)
 TopBar.Position = UDim2.new(0, 0, 0, 0)
-TopBar.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+TopBar.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
 TopBar.BorderSizePixel = 0
 TopBar.Parent = MainFrame
 
@@ -60,7 +59,7 @@ Title.Parent = MainFrame
 local StatusText = Instance.new("TextLabel")
 StatusText.Size = UDim2.new(1, 0, 0, 16)
 StatusText.Position = UDim2.new(0, 0, 0, 26)
-StatusText.Text = "● ВКЛ | ПКМ — наводка"
+StatusText.Text = "● ВКЛ | СКМ — наводка"
 StatusText.TextColor3 = Color3.fromRGB(100, 200, 100)
 StatusText.TextSize = 10
 StatusText.TextXAlignment = Enum.TextXAlignment.Center
@@ -114,7 +113,6 @@ local function GetClosestEnemy()
                 local humanoid = char:FindFirstChild("Humanoid")
                 local head = char:FindFirstChild("Head")
                 if head and humanoid and humanoid.Health > 0 then
-                    -- Проверка на союзников не делаем — в Murder Duels все враги (кроме себя)
                     local dist = (head.Position - myRoot.Position).Magnitude
                     if dist < closestDist then
                         closestDist = dist
@@ -141,10 +139,10 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ===== ПРАВАЯ КНОПКА МЫШИ =====
+-- ===== СРЕДНЯЯ КНОПКА МЫШИ =====
 UserInputService.InputBegan:Connect(function(input, gp)
     if gp then return end
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+    if input.UserInputType == Enum.UserInputType.MouseButton3 then
         if AimbotActive then
             IsAiming = true
             StatusText.Text = "● НАВОДКА"
@@ -155,10 +153,10 @@ UserInputService.InputBegan:Connect(function(input, gp)
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+    if input.UserInputType == Enum.UserInputType.MouseButton3 then
         IsAiming = false
         if AimbotActive then
-            StatusText.Text = "● ВКЛ | ПКМ — наводка"
+            StatusText.Text = "● ВКЛ | СКМ — наводка"
             StatusText.TextColor3 = Color3.fromRGB(100, 200, 100)
             TopBar.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
         end
@@ -172,7 +170,7 @@ ToggleBtn.MouseButton1Click:Connect(function()
         ToggleBtn.Text = "ВЫКЛЮЧИТЬ"
         ToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
         TopBar.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
-        StatusText.Text = "● ВКЛ | ПКМ — наводка"
+        StatusText.Text = "● ВКЛ | СКМ — наводка"
         StatusText.TextColor3 = Color3.fromRGB(100, 200, 100)
     else
         ToggleBtn.Text = "ВКЛЮЧИТЬ"
@@ -189,4 +187,4 @@ CloseBtn.MouseButton1Click:Connect(function()
 end)
 
 print("✅ AIMBOT для Murder Duels загружен!")
-print("🖱️ Зажми ПКМ — прицел наводится на голову врага")
+print("🖱️ Зажми СРЕДНЮЮ кнопку мыши (колесо) — прицел наводится на голову врага")
