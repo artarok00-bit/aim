@@ -1,5 +1,5 @@
--- [[ AIMBOT для Murder Duels — ИСПРАВЛЕННЫЙ ]]
--- Зажми СРЕДНЮЮ кнопку мыши — наводится на ЧУЖОГО игрока (не на себя)
+-- [[ AIMBOT для Murder Duels — ПОИСК ОТ КАМЕРЫ ]]
+-- Зажми СРЕДНЮЮ кнопку мыши — наводится на ближайшего к КАМЕРЕ врага
 
 local Player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -105,18 +105,20 @@ local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 4)
 CloseCorner.Parent = CloseBtn
 
--- ===== ФУНКЦИЯ ПОИСКА ЦЕЛИ =====
+-- ===== ПОИСК ЦЕЛИ ОТ КАМЕРЫ =====
 local function GetTargetPart(char)
-    local head = char:FindFirstChild("Head")
-    if head then return head end
-    
-    local upperTorso = char:FindFirstChild("UpperTorso")
-    if upperTorso then return upperTorso end
-    
-    local torso = char:FindFirstChild("Torso")
-    if torso then return torso end
-    
-    return char:FindFirstChild("HumanoidRootPart")
+    return char:FindFirstChild("Head")
+        or char:FindFirstChild("UpperTorso")
+        or char:FindFirstChild("Torso")
+        or char:FindFirstChild("HumanoidRootPart")
+end
+
+-- Проверка: часть реально в мире и видна
+local function IsPartValid(part)
+    if not part then return false end
+    if not part.Parent then return false end
+    if part.Transparency == 1 then return false end
+    return true
 end
 
 local function GetClosestEnemy()
@@ -125,32 +127,23 @@ local function GetClosestEnemy()
     local closestPart = nil
 
     local myChar = Player.Character
-    if not myChar then return nil, nil end
-    local myRoot = myChar:FindFirstChild("HumanoidRootPart")
-    if not myRoot then return nil, nil end
+    local camPos = Camera.CFrame.Position
 
     for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
-        -- ПРОВЕРКА 1: это не я
         if otherPlayer ~= Player then
             local char = otherPlayer.Character
-            
-            -- ПРОВЕРКА 2: персонаж существует и это не мой персонаж
             if char and char ~= myChar then
                 local humanoid = char:FindFirstChild("Humanoid")
-                
-                -- ПРОВЕРКА 3: жив
                 if humanoid and humanoid.Health > 0 then
                     local part = GetTargetPart(char)
-                    
-                    if part then
-                        -- ПРОВЕРКА 4: часть не принадлежит моему персонажу
-                        if part:IsDescendantOf(myChar) == false then
-                            local dist = (part.Position - myRoot.Position).Magnitude
-                            if dist < closestDist then
-                                closestDist = dist
-                                closestPlayer = otherPlayer
-                                closestPart = part
-                            end
+                    -- Проверяем что часть валидна и не моя
+                    if IsPartValid(part) and not part:IsDescendantOf(myChar) then
+                        -- Ищем относительно КАМЕРЫ
+                        local dist = (part.Position - camPos).Magnitude
+                        if dist < closestDist then
+                            closestDist = dist
+                            closestPlayer = otherPlayer
+                            closestPart = part
                         end
                     end
                 end
@@ -203,7 +196,7 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- ===== КНОПКА ВКЛЮЧЕНИЯ =====
+-- ===== КНОПКА =====
 ToggleBtn.MouseButton1Click:Connect(function()
     AimbotActive = not AimbotActive
     if AimbotActive then
@@ -226,4 +219,4 @@ CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
-print("✅ AIMBOT загружен! Не наводится на себя.")
+print("✅ AIMBOT загружен! Поиск цели от камеры.")
