@@ -1,5 +1,5 @@
--- [[ AIMBOT — Кнопка LeftAlt ]]
--- Зажимаешь кнопку "LeftAlt" в меню — камера наводится на ближайшего игрока
+-- [[ AIMBOT — Клавиша F ]]
+-- Нажми F — камера наводится на ближайшего игрока
 
 local Player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -12,6 +12,7 @@ local IsAiming = false
 local MaxDistance = 1000
 local Smoothness = 0.6
 local Minimized = false
+local AimKey = Enum.KeyCode.F
 
 -- ===== GUI =====
 local ScreenGui = Instance.new("ScreenGui")
@@ -20,8 +21,8 @@ ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 300, 0, 200)
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+MainFrame.Size = UDim2.new(0, 300, 0, 180)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -90)
 MainFrame.BackgroundColor3 = Color3.fromRGB(8, 10, 20)
 MainFrame.BorderSizePixel = 0
 MainFrame.ClipsDescendants = true
@@ -88,13 +89,12 @@ Content.Position = UDim2.new(0, 0, 0, 46)
 Content.BackgroundTransparency = 1
 Content.Parent = MainFrame
 
--- Кнопка включения аимбота
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0.85, 0, 0, 40)
-ToggleBtn.Position = UDim2.new(0.075, 0, 0.05, 0)
+ToggleBtn.Size = UDim2.new(0.85, 0, 0, 45)
+ToggleBtn.Position = UDim2.new(0.075, 0, 0.1, 0)
 ToggleBtn.Text = "ВКЛЮЧИТЬ АИМБОТ"
 ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleBtn.TextSize = 15
+ToggleBtn.TextSize = 16
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
 ToggleBtn.BorderSizePixel = 0
 ToggleBtn.Font = Enum.Font.GothamSemibold
@@ -103,25 +103,9 @@ local ToggleCorner = Instance.new("UICorner")
 ToggleCorner.CornerRadius = UDim.new(0, 10)
 ToggleCorner.Parent = ToggleBtn
 
--- ===== НОВАЯ КНОПКА "LEFT ALT" =====
-local AimBtn = Instance.new("TextButton")
-AimBtn.Size = UDim2.new(0.85, 0, 0, 55)
-AimBtn.Position = UDim2.new(0.075, 0, 0.4, 0)
-AimBtn.Text = "🎯 LEFT ALT"
-AimBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-AimBtn.TextSize = 18
-AimBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 100)
-AimBtn.BorderSizePixel = 0
-AimBtn.Font = Enum.Font.GothamBold
-AimBtn.Parent = Content
-local AimCorner = Instance.new("UICorner")
-AimCorner.CornerRadius = UDim.new(0, 10)
-AimCorner.Parent = AimBtn
-
--- Статус
 local StatusText = Instance.new("TextLabel")
 StatusText.Size = UDim2.new(0.9, 0, 0, 25)
-StatusText.Position = UDim2.new(0.05, 0, 0.85, 0)
+StatusText.Position = UDim2.new(0.05, 0, 0.7, 0)
 StatusText.Text = "🔴 ВЫКЛЮЧЕН"
 StatusText.TextColor3 = Color3.fromRGB(200, 80, 80)
 StatusText.TextSize = 14
@@ -177,32 +161,24 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ===== КНОПКА "LEFT ALT" (зажатие) =====
-AimBtn.MouseButton1Down:Connect(function()
-    if not AimbotActive then return end
-    IsAiming = true
-    AimBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-    AimBtn.Text = "🎯 НАВОДКА..."
-    StatusText.Text = "🎯 НАВОДКА АКТИВНА"
-    StatusText.TextColor3 = Color3.fromRGB(100, 200, 255)
-end)
-
-AimBtn.MouseButton1Up:Connect(function()
-    IsAiming = false
-    AimBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 100)
-    AimBtn.Text = "🎯 LEFT ALT"
-    if AimbotActive then
-        StatusText.Text = "🟢 АИМБОТ ВКЛЮЧЕН"
-        StatusText.TextColor3 = Color3.fromRGB(100, 200, 100)
+-- ===== КЛАВИША F =====
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == AimKey then
+        if not AimbotActive then return end
+        IsAiming = true
+        StatusText.Text = "🎯 НАВОДКА АКТИВНА"
+        StatusText.TextColor3 = Color3.fromRGB(100, 200, 255)
     end
 end)
 
--- Если мышка уходит с кнопки — тоже отпускаем
-AimBtn.MouseLeave:Connect(function()
-    if IsAiming then
+UserInputService.InputEnded:Connect(function(input)
+    if input.KeyCode == AimKey then
         IsAiming = false
-        AimBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 100)
-        AimBtn.Text = "🎯 LEFT ALT"
+        if AimbotActive then
+            StatusText.Text = "🟢 АИМБОТ ВКЛЮЧЕН"
+            StatusText.TextColor3 = Color3.fromRGB(100, 200, 100)
+        end
     end
 end)
 
@@ -213,15 +189,13 @@ ToggleBtn.MouseButton1Click:Connect(function()
     if AimbotActive then
         ToggleBtn.Text = "ВЫКЛЮЧИТЬ АИМБОТ"
         ToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
-        StatusText.Text = "🟢 АИМБОТ ВКЛЮЧЕН"
+        StatusText.Text = "🟢 АИМБОТ ВКЛЮЧЕН (F)"
         StatusText.TextColor3 = Color3.fromRGB(100, 200, 100)
-        AimBtn.BackgroundColor3 = Color3.fromRGB(123, 63, 252)
     else
         ToggleBtn.Text = "ВКЛЮЧИТЬ АИМБОТ"
         ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
         StatusText.Text = "🔴 ВЫКЛЮЧЕН"
         StatusText.TextColor3 = Color3.fromRGB(200, 80, 80)
-        AimBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 100)
         IsAiming = false
     end
 end)
@@ -231,7 +205,7 @@ MinBtn.MouseButton1Click:Connect(function()
     Minimized = not Minimized
     Content.Visible = not Minimized
     MinBtn.Text = Minimized and "+" or "─"
-    MainFrame.Size = Minimized and UDim2.new(0, 300, 0, 46) or UDim2.new(0, 300, 0, 200)
+    MainFrame.Size = Minimized and UDim2.new(0, 300, 0, 46) or UDim2.new(0, 300, 0, 180)
 end)
 
 CloseBtn.MouseButton1Click:Connect(function()
@@ -239,4 +213,4 @@ CloseBtn.MouseButton1Click:Connect(function()
 end)
 
 print("✅ AIMBOT загружен!")
-print("🎯 Зажимай кнопку LEFT ALT в меню для наведения")
+print("🎯 Нажми F для наведения на ближайшего игрока")
