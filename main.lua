@@ -1,6 +1,5 @@
--- [[ AIMBOT для Murder Duels ]]
--- Зажми СРЕДНЮЮ кнопку мыши (колесо) — прицел наводится на голову врага
--- Автор игры: breakfast
+-- [[ AIMBOT для Murder Duels — УНИВЕРСАЛЬНЫЙ ]]
+-- Зажми СРЕДНЮЮ кнопку мыши (колесо) — прицел наводится на ближайшего врага
 
 local Player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -10,8 +9,8 @@ local Camera = workspace.CurrentCamera
 -- ===== НАСТРОЙКИ =====
 local AimbotActive = true
 local IsAiming = false
-local MaxDistance = 1000
-local Smoothness = 0.35
+local MaxDistance = 2000
+local Smoothness = 0.5
 
 -- ===== GUI =====
 local ScreenGui = Instance.new("ScreenGui")
@@ -67,9 +66,20 @@ StatusText.BackgroundTransparency = 1
 StatusText.Font = Enum.Font.Gotham
 StatusText.Parent = MainFrame
 
+local TargetLabel = Instance.new("TextLabel")
+TargetLabel.Size = UDim2.new(1, 0, 0, 14)
+TargetLabel.Position = UDim2.new(0, 0, 0, 42)
+TargetLabel.Text = "Цель: —"
+TargetLabel.TextColor3 = Color3.fromRGB(150, 150, 180)
+TargetLabel.TextSize = 9
+TargetLabel.TextXAlignment = Enum.TextXAlignment.Center
+TargetLabel.BackgroundTransparency = 1
+TargetLabel.Font = Enum.Font.Gotham
+TargetLabel.Parent = MainFrame
+
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0.8, 0, 0, 22)
-ToggleBtn.Position = UDim2.new(0.1, 0, 0.6, 0)
+ToggleBtn.Position = UDim2.new(0.1, 0, 0.7, 0)
 ToggleBtn.Text = "ВЫКЛЮЧИТЬ"
 ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleBtn.TextSize = 11
@@ -95,7 +105,24 @@ local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 4)
 CloseCorner.Parent = CloseBtn
 
--- ===== ФУНКЦИЯ ПОИСКА ВРАГА =====
+-- ===== ФУНКЦИЯ ПОИСКА ЦЕЛИ (универсальная) =====
+local function GetTargetPart(char)
+    -- Пробуем найти голову, если нет — ищем любую подходящую часть
+    local head = char:FindFirstChild("Head")
+    if head then return head end
+    
+    local upperTorso = char:FindFirstChild("UpperTorso")
+    if upperTorso then return upperTorso end
+    
+    local torso = char:FindFirstChild("Torso")
+    if torso then return torso end
+    
+    local humanoidRoot = char:FindFirstChild("HumanoidRootPart")
+    if humanoidRoot then return humanoidRoot end
+    
+    return nil
+end
+
 local function GetClosestEnemy()
     local closestPlayer = nil
     local closestDist = MaxDistance
@@ -111,13 +138,15 @@ local function GetClosestEnemy()
             local char = otherPlayer.Character
             if char then
                 local humanoid = char:FindFirstChild("Humanoid")
-                local head = char:FindFirstChild("Head")
-                if head and humanoid and humanoid.Health > 0 then
-                    local dist = (head.Position - myRoot.Position).Magnitude
-                    if dist < closestDist then
-                        closestDist = dist
-                        closestPlayer = otherPlayer
-                        closestPart = head
+                if humanoid and humanoid.Health > 0 then
+                    local part = GetTargetPart(char)
+                    if part then
+                        local dist = (part.Position - myRoot.Position).Magnitude
+                        if dist < closestDist then
+                            closestDist = dist
+                            closestPlayer = otherPlayer
+                            closestPart = part
+                        end
                     end
                 end
             end
@@ -133,9 +162,15 @@ RunService.RenderStepped:Connect(function()
 
     local target, targetPart = GetClosestEnemy()
     if target and targetPart then
+        TargetLabel.Text = "Цель: " .. target.Name
+        TargetLabel.TextColor3 = Color3.fromRGB(255, 200, 0)
+        
         local currentCFrame = Camera.CFrame
         local lookAt = CFrame.lookAt(currentCFrame.Position, targetPart.Position)
         Camera.CFrame = currentCFrame:Lerp(lookAt, Smoothness)
+    else
+        TargetLabel.Text = "Цель: —"
+        TargetLabel.TextColor3 = Color3.fromRGB(150, 150, 180)
     end
 end)
 
@@ -187,4 +222,4 @@ CloseBtn.MouseButton1Click:Connect(function()
 end)
 
 print("✅ AIMBOT для Murder Duels загружен!")
-print("🖱️ Зажми СРЕДНЮЮ кнопку мыши (колесо) — прицел наводится на голову врага")
+print("🖱️ Зажми СРЕДНЮЮ кнопку мыши — наводится на врага")
