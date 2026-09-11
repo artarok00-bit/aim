@@ -1,4 +1,6 @@
--- [[ AIMBOT — Нажал F = следует, нажал снова = выкл ]]
+-- [[ AIMBOT для Murder Duels ]]
+-- Зажми правую кнопку мыши (ПКМ) — прицел наводится на голову врага
+-- Автор игры: breakfast
 
 local Player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -6,20 +8,20 @@ local UserInputService = game:GetService("UserInputService")
 local Camera = workspace.CurrentCamera
 
 -- ===== НАСТРОЙКИ =====
-local AimbotActive = false
-local IsFollowing = false
-local MaxDistance = 1000
-local Smoothness = 0.6
-local AimKey = Enum.KeyCode.F
+local AimbotActive = true      -- аимбот всегда включён (можно выключить кнопкой)
+local IsAiming = false          -- зажата ли ПКМ
+local MaxDistance = 1000        -- максимальная дистанция поиска
+local Smoothness = 0.35         -- плавность (0.1 = медленно, 1 = мгновенно)
+local Minimized = false
 
 -- ===== GUI =====
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "Aimbot"
+ScreenGui.Name = "MurderDuelsAimbot"
 ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 180, 0, 70)
+MainFrame.Size = UDim2.new(0, 180, 0, 80)
 MainFrame.Position = UDim2.new(0.5, -90, 0.85, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 MainFrame.BackgroundTransparency = 0.15
@@ -47,9 +49,9 @@ TopCorner.Parent = TopBar
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 20)
 Title.Position = UDim2.new(0, 0, 0, 8)
-Title.Text = "AIMBOT"
+Title.Text = "AIMBOT | Murder Duels"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 13
+Title.TextSize = 12
 Title.TextXAlignment = Enum.TextXAlignment.Center
 Title.BackgroundTransparency = 1
 Title.Font = Enum.Font.GothamBold
@@ -58,9 +60,9 @@ Title.Parent = MainFrame
 local StatusText = Instance.new("TextLabel")
 StatusText.Size = UDim2.new(1, 0, 0, 16)
 StatusText.Position = UDim2.new(0, 0, 0, 26)
-StatusText.Text = "● ВЫКЛ"
-StatusText.TextColor3 = Color3.fromRGB(200, 80, 80)
-StatusText.TextSize = 11
+StatusText.Text = "● ВКЛ | ПКМ — наводка"
+StatusText.TextColor3 = Color3.fromRGB(100, 200, 100)
+StatusText.TextSize = 10
 StatusText.TextXAlignment = Enum.TextXAlignment.Center
 StatusText.BackgroundTransparency = 1
 StatusText.Font = Enum.Font.Gotham
@@ -68,11 +70,11 @@ StatusText.Parent = MainFrame
 
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0.8, 0, 0, 22)
-ToggleBtn.Position = UDim2.new(0.1, 0, 0.65, 0)
-ToggleBtn.Text = "ВКЛЮЧИТЬ"
+ToggleBtn.Position = UDim2.new(0.1, 0, 0.6, 0)
+ToggleBtn.Text = "ВЫКЛЮЧИТЬ"
 ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleBtn.TextSize = 11
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
 ToggleBtn.BorderSizePixel = 0
 ToggleBtn.Font = Enum.Font.GothamSemibold
 ToggleBtn.Parent = MainFrame
@@ -94,17 +96,17 @@ local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 4)
 CloseCorner.Parent = CloseBtn
 
--- ===== ФУНКЦИЯ ПОИСКА =====
-local function GetClosestPlayer()
+-- ===== ФУНКЦИЯ ПОИСКА ВРАГА =====
+local function GetClosestEnemy()
     local closestPlayer = nil
     local closestDist = MaxDistance
     local closestPart = nil
-    
+
     local myChar = Player.Character
     if not myChar then return nil, nil end
     local myRoot = myChar:FindFirstChild("HumanoidRootPart")
     if not myRoot then return nil, nil end
-    
+
     for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
         if otherPlayer ~= Player then
             local char = otherPlayer.Character
@@ -112,6 +114,7 @@ local function GetClosestPlayer()
                 local humanoid = char:FindFirstChild("Humanoid")
                 local head = char:FindFirstChild("Head")
                 if head and humanoid and humanoid.Health > 0 then
+                    -- Проверка на союзников не делаем — в Murder Duels все враги (кроме себя)
                     local dist = (head.Position - myRoot.Position).Magnitude
                     if dist < closestDist then
                         closestDist = dist
@@ -125,10 +128,12 @@ local function GetClosestPlayer()
     return closestPlayer, closestPart
 end
 
--- ===== ОСНОВНОЙ ЦИКЛ (следит всегда, пока включено) =====
+-- ===== ОСНОВНОЙ ЦИКЛ =====
 RunService.RenderStepped:Connect(function()
-    if not IsFollowing then return end
-    local target, targetPart = GetClosestPlayer()
+    if not AimbotActive then return end
+    if not IsAiming then return end
+
+    local target, targetPart = GetClosestEnemy()
     if target and targetPart then
         local currentCFrame = Camera.CFrame
         local lookAt = CFrame.lookAt(currentCFrame.Position, targetPart.Position)
@@ -136,44 +141,52 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ===== КЛАВИША F — ПЕРЕКЛЮЧАТЕЛЬ =====
+-- ===== ПРАВАЯ КНОПКА МЫШИ =====
 UserInputService.InputBegan:Connect(function(input, gp)
     if gp then return end
-    if input.KeyCode == AimKey then
-        IsFollowing = not IsFollowing
-        if IsFollowing then
-            StatusText.Text = "● СЛЕЖУ"
-            StatusText.TextColor3 = Color3.fromRGB(100, 200, 255)
-            TopBar.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
-        else
-            StatusText.Text = "● ВЫКЛ"
-            StatusText.TextColor3 = Color3.fromRGB(200, 80, 80)
-            TopBar.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        if AimbotActive then
+            IsAiming = true
+            StatusText.Text = "● НАВОДКА"
+            StatusText.TextColor3 = Color3.fromRGB(255, 200, 0)
+            TopBar.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+        end
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        IsAiming = false
+        if AimbotActive then
+            StatusText.Text = "● ВКЛ | ПКМ — наводка"
+            StatusText.TextColor3 = Color3.fromRGB(100, 200, 100)
+            TopBar.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
         end
     end
 end)
 
 -- ===== КНОПКА ВКЛЮЧЕНИЯ =====
 ToggleBtn.MouseButton1Click:Connect(function()
-    IsFollowing = not IsFollowing
-    if IsFollowing then
+    AimbotActive = not AimbotActive
+    if AimbotActive then
         ToggleBtn.Text = "ВЫКЛЮЧИТЬ"
         ToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
-        TopBar.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
-        StatusText.Text = "● СЛЕЖУ"
-        StatusText.TextColor3 = Color3.fromRGB(100, 200, 255)
+        TopBar.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
+        StatusText.Text = "● ВКЛ | ПКМ — наводка"
+        StatusText.TextColor3 = Color3.fromRGB(100, 200, 100)
     else
         ToggleBtn.Text = "ВКЛЮЧИТЬ"
         ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
         TopBar.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
         StatusText.Text = "● ВЫКЛ"
         StatusText.TextColor3 = Color3.fromRGB(200, 80, 80)
+        IsAiming = false
     end
 end)
 
--- ===== ЗАКРЫТИЕ =====
 CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
-print("✅ AIMBOT загружен! Нажми F — слежение, нажми снова — выкл")
+print("✅ AIMBOT для Murder Duels загружен!")
+print("🖱️ Зажми ПКМ — прицел наводится на голову врага")
