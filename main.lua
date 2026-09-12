@@ -1,6 +1,6 @@
--- [[ AIMBOT для Murder Duels — ВЫБОР ЦЕЛИ ]]
--- Выбираешь игрока из списка — наводится на ТЕЛО (Torso / UpperTorso)
--- Зажми СРЕДНЮЮ кнопку мыши для наводки
+-- [[ AIMBOT для Murder Duels + УВЕЛИЧЕНИЕ ХИТБОКСОВ ]]
+-- СКМ — наводка на тело выбранного
+-- Кнопка "УВЕЛИЧИТЬ ХИТБОКСЫ" — увеличивает хитбоксы всех врагов
 
 local Player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -13,7 +13,12 @@ local IsAiming = false
 local MaxDistance = 2000
 local Smoothness = 0.5
 local SelectedPlayer = nil
-local RefreshCooldown = 5 -- обновление списка раз в 5 секунд (медленнее)
+local RefreshCooldown = 5
+
+-- ===== НАСТРОЙКИ ХИТБОКСОВ =====
+local HitboxScale = 3 -- во сколько раз увеличить (3 = в 3 раза больше)
+local HitboxActive = false
+local OriginalSizes = {} -- сохраняем оригинальные размеры
 
 -- ===== GUI =====
 local ScreenGui = Instance.new("ScreenGui")
@@ -22,8 +27,8 @@ ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 220, 0, 320)
-MainFrame.Position = UDim2.new(0.5, -110, 0.5, -160)
+MainFrame.Size = UDim2.new(0, 220, 0, 380)
+MainFrame.Position = UDim2.new(0.5, -110, 0.5, -190)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 MainFrame.BackgroundTransparency = 0.1
 MainFrame.BorderSizePixel = 0
@@ -51,7 +56,7 @@ TopCorner.Parent = TopBar
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(0.7, 0, 1, 0)
 Title.Position = UDim2.new(0.05, 0, 0, 0)
-Title.Text = "AIMBOT | ВЫБОР ЦЕЛИ"
+Title.Text = "AIMBOT + HITBOX"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 13
 Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -73,7 +78,7 @@ local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 5)
 CloseCorner.Parent = CloseBtn
 
--- Статус
+-- Статус аимбота
 local StatusText = Instance.new("TextLabel")
 StatusText.Size = UDim2.new(1, 0, 0, 18)
 StatusText.Position = UDim2.new(0, 0, 0, 40)
@@ -97,10 +102,25 @@ SelectedLabel.BackgroundTransparency = 1
 SelectedLabel.Font = Enum.Font.GothamBold
 SelectedLabel.Parent = MainFrame
 
+-- ===== КНОПКА УВЕЛИЧЕНИЯ ХИТБОКСОВ =====
+local HitboxBtn = Instance.new("TextButton")
+HitboxBtn.Size = UDim2.new(0.9, 0, 0, 28)
+HitboxBtn.Position = UDim2.new(0.05, 0, 0.21, 0)
+HitboxBtn.Text = "🎯 УВЕЛИЧИТЬ ХИТБОКСЫ"
+HitboxBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+HitboxBtn.TextSize = 11
+HitboxBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
+HitboxBtn.BorderSizePixel = 0
+HitboxBtn.Font = Enum.Font.GothamSemibold
+HitboxBtn.Parent = MainFrame
+local HitboxCorner = Instance.new("UICorner")
+HitboxCorner.CornerRadius = UDim.new(0, 6)
+HitboxCorner.Parent = HitboxBtn
+
 -- Кнопка обновить список
 local RefreshBtn = Instance.new("TextButton")
 RefreshBtn.Size = UDim2.new(0.9, 0, 0, 25)
-RefreshBtn.Position = UDim2.new(0.05, 0, 0.26, 0)
+RefreshBtn.Position = UDim2.new(0.05, 0, 0.31, 0)
 RefreshBtn.Text = "🔄 ОБНОВИТЬ СПИСОК"
 RefreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 RefreshBtn.TextSize = 11
@@ -114,8 +134,8 @@ RefreshCorner.Parent = RefreshBtn
 
 -- Список игроков
 local PlayerList = Instance.new("ScrollingFrame")
-PlayerList.Size = UDim2.new(0.9, 0, 0, 130)
-PlayerList.Position = UDim2.new(0.05, 0, 0.38, 0)
+PlayerList.Size = UDim2.new(0.9, 0, 0, 120)
+PlayerList.Position = UDim2.new(0.05, 0, 0.42, 0)
 PlayerList.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
 PlayerList.BorderSizePixel = 0
 PlayerList.ScrollBarThickness = 4
@@ -125,7 +145,7 @@ local ListCorner = Instance.new("UICorner")
 ListCorner.CornerRadius = UDim.new(0, 6)
 ListCorner.Parent = PlayerList
 
--- Кнопка сброса
+-- Кнопка сброса выбора
 local ResetBtn = Instance.new("TextButton")
 ResetBtn.Size = UDim2.new(0.9, 0, 0, 25)
 ResetBtn.Position = UDim2.new(0.05, 0, 0.85, 0)
@@ -139,6 +159,64 @@ ResetBtn.Parent = MainFrame
 local ResetCorner = Instance.new("UICorner")
 ResetCorner.CornerRadius = UDim.new(0, 6)
 ResetCorner.Parent = ResetBtn
+
+-- ===== ФУНКЦИЯ УВЕЛИЧЕНИЯ ХИТБОКСОВ =====
+local function GetHitboxParts(char)
+    local parts = {}
+    for _, name in ipairs({"Head", "UpperTorso", "LowerTorso", "Torso", "LeftUpperArm", "RightUpperArm", 
+                            "LeftLowerArm", "RightLowerArm", "LeftHand", "RightHand",
+                            "LeftUpperLeg", "RightUpperLeg", "LeftLowerLeg", "RightLowerLeg",
+                            "LeftFoot", "RightFoot", "HumanoidRootPart"}) do
+        local part = char:FindFirstChild(name)
+        if part and part:IsA("BasePart") then
+            table.insert(parts, part)
+        end
+    end
+    return parts
+end
+
+local function EnableHitbox()
+    HitboxActive = true
+    OriginalSizes = {}
+    local myChar = Player.Character
+    
+    for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
+        if otherPlayer ~= Player then
+            local char = otherPlayer.Character
+            if char and char ~= myChar then
+                local parts = GetHitboxParts(char)
+                for _, part in ipairs(parts) do
+                    -- Сохраняем оригинальный размер и позицию
+                    OriginalSizes[part] = {
+                        Size = part.Size,
+                        CFrame = part.CFrame
+                    }
+                    -- Увеличиваем размер
+                    part.Size = part.Size * HitboxScale
+                    -- Важно: не даём части улететь (Transparency и CanCollide оставляем)
+                end
+            end
+        end
+    end
+    
+    HitboxBtn.Text = "🎯 ХИТБОКСЫ УВЕЛИЧЕНЫ"
+    HitboxBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
+end
+
+local function DisableHitbox()
+    HitboxActive = false
+    
+    for part, data in pairs(OriginalSizes) do
+        if part and part.Parent then
+            part.Size = data.Size
+            part.CFrame = data.CFrame
+        end
+    end
+    OriginalSizes = {}
+    
+    HitboxBtn.Text = "🎯 УВЕЛИЧИТЬ ХИТБОКСЫ"
+    HitboxBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
+end
 
 -- ===== ФУНКЦИЯ ОБНОВЛЕНИЯ СПИСКА =====
 local function RefreshPlayerList()
@@ -189,9 +267,8 @@ local function RefreshPlayerList()
     end
 end
 
--- ===== ФУНКЦИЯ ПОЛУЧЕНИЯ ТЕЛА (НЕ ГОЛОВЫ) =====
+-- ===== ФУНКЦИЯ ПОЛУЧЕНИЯ ТЕЛА =====
 local function GetTargetBody(char)
-    -- Приоритет: UpperTorso (R15), Torso (R6), HumanoidRootPart
     return char:FindFirstChild("UpperTorso")
         or char:FindFirstChild("Torso")
         or char:FindFirstChild("HumanoidRootPart")
@@ -253,6 +330,14 @@ UserInputService.InputEnded:Connect(function(input)
 end)
 
 -- ===== КНОПКИ =====
+HitboxBtn.MouseButton1Click:Connect(function()
+    if HitboxActive then
+        DisableHitbox()
+    else
+        EnableHitbox()
+    end
+end)
+
 RefreshBtn.MouseButton1Click:Connect(RefreshPlayerList)
 
 ResetBtn.MouseButton1Click:Connect(function()
@@ -263,18 +348,37 @@ ResetBtn.MouseButton1Click:Connect(function()
 end)
 
 CloseBtn.MouseButton1Click:Connect(function()
+    if HitboxActive then DisableHitbox() end
     ScreenGui:Destroy()
 end)
 
--- Автообновление раз в 5 секунд (медленнее)
+-- Автообновление раз в 5 секунд
 task.spawn(function()
     while ScreenGui.Parent do
         task.wait(RefreshCooldown)
         if ScreenGui.Parent then
             RefreshPlayerList()
+            -- Если хитбоксы включены — обновляем для новых игроков
+            if HitboxActive then
+                for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
+                    if otherPlayer ~= Player then
+                        local char = otherPlayer.Character
+                        if char and char ~= Player.Character then
+                            local parts = GetHitboxParts(char)
+                            for _, part in ipairs(parts) do
+                                if not OriginalSizes[part] then
+                                    OriginalSizes[part] = {Size = part.Size / HitboxScale, CFrame = part.CFrame}
+                                    part.Size = part.Size * HitboxScale
+                                end
+                            end
+                        end
+                    end
+                end
+            end
         end
     end
 end)
 
 RefreshPlayerList()
-print("✅ AIMBOT загружен! Наводка на ТЕЛО, список обновляется раз в 5 сек.")
+print("✅ AIMBOT + HITBOX загружен!")
+print("🎯 Кнопка 'УВЕЛИЧИТЬ ХИТБОКСЫ' — увеличивает хитбоксы врагов в 3 раза")
