@@ -1,8 +1,10 @@
--- [[ Murder Duels — ХИТБОКС ГОЛОВЫ + ESP (универсальный) ]]
--- Работает на ВСЕХ персонажей, включая NPC и ботов
+-- [[ Murder Duels — ХИТБОКС ГОЛОВЫ + ESP + WALLBANG ]]
+-- Хитбокс головы, ESP, стрельба сквозь стены
 
 local Player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
 
 -- ===== НАСТРОЙКИ =====
 local CheckInterval = 0.2
@@ -16,6 +18,10 @@ local OriginalSizes = {}
 local EspActive = false
 local EspColor = Color3.fromRGB(255, 0, 0)
 local EspHighlights = {}
+
+-- ===== WALLBANG =====
+local WallbangActive = false
+local OriginalCollisions = {} -- [part] = CanCollide
 
 -- ===== GUI =====
 local ScreenGui = Instance.new("ScreenGui")
@@ -73,7 +79,7 @@ local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 5)
 CloseCorner.Parent = CloseBtn
 
--- Вкладки
+-- Вкладки (теперь 3)
 local TabBar = Instance.new("Frame")
 TabBar.Size = UDim2.new(1, 0, 0, 35)
 TabBar.Position = UDim2.new(0, 0, 0, 40)
@@ -82,25 +88,37 @@ TabBar.BorderSizePixel = 0
 TabBar.Parent = MainFrame
 
 local HitboxTab = Instance.new("TextButton")
-HitboxTab.Size = UDim2.new(0.5, 0, 1, 0)
+HitboxTab.Size = UDim2.new(0.34, 0, 1, 0)
+HitboxTab.Position = UDim2.new(0, 0, 0, 0)
 HitboxTab.Text = "🎯 ГОЛОВА"
 HitboxTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-HitboxTab.TextSize = 13
+HitboxTab.TextSize = 12
 HitboxTab.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
 HitboxTab.BorderSizePixel = 0
 HitboxTab.Font = Enum.Font.GothamSemibold
 HitboxTab.Parent = TabBar
 
 local ViewTab = Instance.new("TextButton")
-ViewTab.Size = UDim2.new(0.5, 0, 1, 0)
-ViewTab.Position = UDim2.new(0.5, 0, 0, 0)
+ViewTab.Size = UDim2.new(0.33, 0, 1, 0)
+ViewTab.Position = UDim2.new(0.34, 0, 0, 0)
 ViewTab.Text = "👁 ВИД"
 ViewTab.TextColor3 = Color3.fromRGB(180, 180, 210)
-ViewTab.TextSize = 13
+ViewTab.TextSize = 12
 ViewTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
 ViewTab.BorderSizePixel = 0
 ViewTab.Font = Enum.Font.GothamSemibold
 ViewTab.Parent = TabBar
+
+local WallbangTab = Instance.new("TextButton")
+WallbangTab.Size = UDim2.new(0.33, 0, 1, 0)
+WallbangTab.Position = UDim2.new(0.67, 0, 0, 0)
+WallbangTab.Text = "🔫 WALLBANG"
+WallbangTab.TextColor3 = Color3.fromRGB(180, 180, 210)
+WallbangTab.TextSize = 12
+WallbangTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
+WallbangTab.BorderSizePixel = 0
+WallbangTab.Font = Enum.Font.GothamSemibold
+WallbangTab.Parent = TabBar
 
 -- Контент
 local Content = Instance.new("Frame")
@@ -253,15 +271,82 @@ EspStatus.BackgroundTransparency = 1
 EspStatus.Font = Enum.Font.Gotham
 EspStatus.Parent = ViewPanel
 
+-- ===== ВКЛАДКА "WALLBANG" =====
+local WallbangPanel = Instance.new("Frame")
+WallbangPanel.Size = UDim2.new(1, 0, 1, 0)
+WallbangPanel.BackgroundTransparency = 1
+WallbangPanel.Visible = false
+WallbangPanel.Parent = Content
+
+local WallbangInfo = Instance.new("TextLabel")
+WallbangInfo.Size = UDim2.new(0.9, 0, 0, 60)
+WallbangInfo.Position = UDim2.new(0.05, 0, 0.05, 0)
+WallbangInfo.Text = "🔫 СТРЕЛЬБА СКВОЗЬ СТЕНЫ\n\nОтключает коллизии у стен вокруг\nчтобы пули проходили насквозь"
+WallbangInfo.TextColor3 = Color3.fromRGB(180, 180, 210)
+WallbangInfo.TextSize = 12
+WallbangInfo.TextXAlignment = Enum.TextXAlignment.Center
+WallbangInfo.BackgroundTransparency = 1
+WallbangInfo.Font = Enum.Font.Gotham
+WallbangInfo.Parent = WallbangPanel
+
+local WallbangBtn = Instance.new("TextButton")
+WallbangBtn.Size = UDim2.new(0.9, 0, 0, 50)
+WallbangBtn.Position = UDim2.new(0.05, 0, 0.35, 0)
+WallbangBtn.Text = "🔫 ВКЛЮЧИТЬ WALLBANG"
+WallbangBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+WallbangBtn.TextSize = 14
+WallbangBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+WallbangBtn.BorderSizePixel = 0
+WallbangBtn.Font = Enum.Font.GothamBold
+WallbangBtn.Parent = WallbangPanel
+local WallbangCorner = Instance.new("UICorner")
+WallbangCorner.CornerRadius = UDim.new(0, 8)
+WallbangCorner.Parent = WallbangBtn
+
+local WallbangStatus = Instance.new("TextLabel")
+WallbangStatus.Size = UDim2.new(0.9, 0, 0, 22)
+WallbangStatus.Position = UDim2.new(0.05, 0, 0.55, 0)
+WallbangStatus.Text = "● ВЫКЛЮЧЕНО"
+WallbangStatus.TextColor3 = Color3.fromRGB(200, 80, 80)
+WallbangStatus.TextSize = 13
+WallbangStatus.TextXAlignment = Enum.TextXAlignment.Center
+WallbangStatus.BackgroundTransparency = 1
+WallbangStatus.Font = Enum.Font.Gotham
+WallbangStatus.Parent = WallbangPanel
+
+local WallbangRange = Instance.new("TextLabel")
+WallbangRange.Size = UDim2.new(0.9, 0, 0, 20)
+WallbangRange.Position = UDim2.new(0.05, 0, 0.68, 0)
+WallbangRange.Text = "РАДИУС (студов)"
+WallbangRange.TextColor3 = Color3.fromRGB(180, 180, 210)
+WallbangRange.TextSize = 11
+WallbangRange.TextXAlignment = Enum.TextXAlignment.Left
+WallbangRange.BackgroundTransparency = 1
+WallbangRange.Font = Enum.Font.Gotham
+WallbangRange.Parent = WallbangPanel
+
+local RangeInput = Instance.new("TextBox")
+RangeInput.Size = UDim2.new(0.9, 0, 0, 30)
+RangeInput.Position = UDim2.new(0.05, 0, 0.75, 0)
+RangeInput.Text = "50"
+RangeInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+RangeInput.TextSize = 14
+RangeInput.BackgroundColor3 = Color3.fromRGB(30, 33, 50)
+RangeInput.BorderSizePixel = 0
+RangeInput.TextXAlignment = Enum.TextXAlignment.Center
+RangeInput.Font = Enum.Font.GothamBold
+RangeInput.Parent = WallbangPanel
+local RangeCorner = Instance.new("UICorner")
+RangeCorner.CornerRadius = UDim.new(0, 6)
+RangeCorner.Parent = RangeInput
+
 -- ===== УНИВЕРСАЛЬНЫЙ ПОИСК ГОЛОВЫ =====
 local function GetHeadParts(char)
     local heads = {}
-    -- Стандартная голова
     local head = char:FindFirstChild("Head")
     if head and head:IsA("BasePart") then
         table.insert(heads, head)
     end
-    -- Если нет стандартной — ищем первую часть с "Head" в имени
     for _, part in ipairs(char:GetDescendants()) do
         if part:IsA("BasePart") and string.find(string.lower(part.Name), "head") then
             if not table.find(heads, part) then
@@ -269,7 +354,6 @@ local function GetHeadParts(char)
             end
         end
     end
-    -- Если всё ещё пусто — берём все части выше HumanoidRootPart (примерно голова)
     if #heads == 0 then
         local root = char:FindFirstChild("HumanoidRootPart")
         if root then
@@ -287,8 +371,7 @@ end
 local function ApplyHitboxToPlayer(otherPlayer)
     if otherPlayer == Player then return end
     local char = otherPlayer.Character
-    if not char then return end
-    if char == Player.Character then return end
+    if not char or char == Player.Character then return end
     
     local heads = GetHeadParts(char)
     for _, head in ipairs(heads) do
@@ -299,11 +382,9 @@ local function ApplyHitboxToPlayer(otherPlayer)
     end
 end
 
--- Также применяем ко всем NPC (не игрокам)
 local function ApplyHitboxToNPCs()
     for _, obj in ipairs(workspace:GetChildren()) do
         if obj:IsA("Model") and not game.Players:GetPlayerFromCharacter(obj) then
-            -- Это NPC или болванка
             local humanoid = obj:FindFirstChildOfClass("Humanoid")
             if humanoid then
                 local heads = GetHeadParts(obj)
@@ -321,12 +402,10 @@ end
 function EnableHitbox()
     HitboxActive = true
     OriginalSizes = {}
-    
-    for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
-        ApplyHitboxToPlayer(otherPlayer)
+    for _, p in ipairs(game.Players:GetPlayers()) do
+        ApplyHitboxToPlayer(p)
     end
     ApplyHitboxToNPCs()
-    
     HitboxBtn.Text = "🎯 ВЫКЛЮЧИТЬ ХИТБОКС ГОЛОВЫ"
     HitboxBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
     HitboxStatus.Text = "● ВКЛЮЧЕНО (x" .. HitboxScale .. ")"
@@ -335,14 +414,12 @@ end
 
 function DisableHitbox()
     HitboxActive = false
-    
     for part, data in pairs(OriginalSizes) do
         if part and part.Parent then
             part.Size = data.Size
         end
     end
     OriginalSizes = {}
-    
     HitboxBtn.Text = "🎯 ВКЛЮЧИТЬ ХИТБОКС ГОЛОВЫ"
     HitboxBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
     HitboxStatus.Text = "● ВЫКЛЮЧЕНО"
@@ -354,7 +431,6 @@ local function CreateHighlight(char)
     if not char then return nil end
     local old = char:FindFirstChild("MurderESP")
     if old then old:Destroy() end
-    
     local highlight = Instance.new("Highlight")
     highlight.Name = "MurderESP"
     highlight.FillColor = EspColor
@@ -372,7 +448,6 @@ local function ApplyEspToPlayer(otherPlayer)
     if not char or char == Player.Character then return end
     if not char:FindFirstChildOfClass("Humanoid") then return end
     if char:FindFirstChild("MurderESP") then return end
-    
     local highlight = CreateHighlight(char)
     if highlight then EspHighlights[otherPlayer] = highlight end
 end
@@ -390,9 +465,7 @@ end
 function EnableEsp()
     EspActive = true
     EspHighlights = {}
-    for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
-        ApplyEspToPlayer(otherPlayer)
-    end
+    for _, p in ipairs(game.Players:GetPlayers()) do ApplyEspToPlayer(p) end
     ApplyEspToNPCs()
     EspBtn.Text = "👁 ВЫКЛЮЧИТЬ ESP"
     EspBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
@@ -418,6 +491,71 @@ function DisableEsp()
     EspStatus.TextColor3 = Color3.fromRGB(200, 80, 80)
 end
 
+-- ===== WALLBANG =====
+local function ApplyWallbang()
+    local myChar = Player.Character
+    if not myChar then return end
+    local myRoot = myChar:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return end
+    
+    local range = tonumber(RangeInput.Text) or 50
+    local myPos = myRoot.Position
+    
+    -- Проходим по всем частям в радиусе и отключаем коллизии (только для стен)
+    for _, part in ipairs(workspace:GetDescendants()) do
+        if part:IsA("BasePart") then
+            -- Пропускаем части персонажа и моего персонажа
+            if not part:IsDescendantOf(myChar) then
+                -- Проверяем что это часть карты (не игрок, не NPC)
+                local isCharacter = false
+                for _, p in ipairs(game.Players:GetPlayers()) do
+                    if p.Character and part:IsDescendantOf(p.Character) then
+                        isCharacter = true
+                        break
+                    end
+                end
+                
+                if not isCharacter and part.Anchored then
+                    local dist = (part.Position - myPos).Magnitude
+                    if dist <= range then
+                        if not OriginalCollisions[part] then
+                            OriginalCollisions[part] = part.CanCollide
+                            part.CanCollide = false
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function RestoreWallbang()
+    for part, data in pairs(OriginalCollisions) do
+        if part and part.Parent then
+            part.CanCollide = data
+        end
+    end
+    OriginalCollisions = {}
+end
+
+function EnableWallbang()
+    WallbangActive = true
+    ApplyWallbang()
+    WallbangBtn.Text = "🔫 ВЫКЛЮЧИТЬ WALLBANG"
+    WallbangBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
+    WallbangStatus.Text = "● ВКЛЮЧЕНО"
+    WallbangStatus.TextColor3 = Color3.fromRGB(100, 200, 100)
+end
+
+function DisableWallbang()
+    WallbangActive = false
+    RestoreWallbang()
+    WallbangBtn.Text = "🔫 ВКЛЮЧИТЬ WALLBANG"
+    WallbangBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+    WallbangStatus.Text = "● ВЫКЛЮЧЕНО"
+    WallbangStatus.TextColor3 = Color3.fromRGB(200, 80, 80)
+end
+
 -- ===== ГЛАВНЫЙ ЦИКЛ =====
 task.spawn(function()
     while ScreenGui.Parent do
@@ -430,6 +568,9 @@ task.spawn(function()
             for _, p in ipairs(game.Players:GetPlayers()) do ApplyHitboxToPlayer(p) end
             ApplyHitboxToNPCs()
         end
+        if WallbangActive then
+            ApplyWallbang()
+        end
     end
 end)
 
@@ -437,19 +578,37 @@ end)
 HitboxTab.MouseButton1Click:Connect(function()
     HitboxPanel.Visible = true
     ViewPanel.Visible = false
+    WallbangPanel.Visible = false
     HitboxTab.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
     HitboxTab.TextColor3 = Color3.fromRGB(255, 255, 255)
     ViewTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
     ViewTab.TextColor3 = Color3.fromRGB(180, 180, 210)
+    WallbangTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
+    WallbangTab.TextColor3 = Color3.fromRGB(180, 180, 210)
 end)
 
 ViewTab.MouseButton1Click:Connect(function()
     HitboxPanel.Visible = false
     ViewPanel.Visible = true
+    WallbangPanel.Visible = false
     ViewTab.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
     ViewTab.TextColor3 = Color3.fromRGB(255, 255, 255)
     HitboxTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
     HitboxTab.TextColor3 = Color3.fromRGB(180, 180, 210)
+    WallbangTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
+    WallbangTab.TextColor3 = Color3.fromRGB(180, 180, 210)
+end)
+
+WallbangTab.MouseButton1Click:Connect(function()
+    HitboxPanel.Visible = false
+    ViewPanel.Visible = false
+    WallbangPanel.Visible = true
+    WallbangTab.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
+    WallbangTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+    HitboxTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
+    HitboxTab.TextColor3 = Color3.fromRGB(180, 180, 210)
+    ViewTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
+    ViewTab.TextColor3 = Color3.fromRGB(180, 180, 210)
 end)
 
 -- ===== КНОПКИ =====
@@ -461,10 +620,15 @@ EspBtn.MouseButton1Click:Connect(function()
     if EspActive then DisableEsp() else EnableEsp() end
 end)
 
+WallbangBtn.MouseButton1Click:Connect(function()
+    if WallbangActive then DisableWallbang() else EnableWallbang() end
+end)
+
 CloseBtn.MouseButton1Click:Connect(function()
     if HitboxActive then DisableHitbox() end
     if EspActive then DisableEsp() end
+    if WallbangActive then DisableWallbang() end
     ScreenGui:Destroy()
 end)
 
-print("✅ Murder Duels загружено! Универсальный хитбокс головы + NPC")
+print("✅ Murder Duels загружено! Голова + ESP + Wallbang")
