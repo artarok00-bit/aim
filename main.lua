@@ -1,14 +1,15 @@
--- [[ Murder Duels — ХИТБОКСЫ (до 100) + ESP (авто-обновление) ]]
--- Работает на ВСЕХ игроков, включая новых и после респавна
+-- [[ Murder Duels — ХИТБОКС ТОЛЬКО НА ГОЛОВУ + ESP ]]
+-- Увеличивает ТОЛЬКО голову врагов (легче попасть в хедшот)
+-- ESP — красная обводка
 
 local Player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
 
 -- ===== НАСТРОЙКИ =====
-local CheckInterval = 0.5 -- проверка каждые 0.5 сек (быстро)
+local CheckInterval = 0.3
 
--- ===== ХИТБОКСЫ =====
-local HitboxScale = 3
+-- ===== ХИТБОКС =====
+local HitboxScale = 5
 local HitboxActive = false
 local OriginalSizes = {}
 
@@ -85,7 +86,7 @@ TabBar.Parent = MainFrame
 local HitboxTab = Instance.new("TextButton")
 HitboxTab.Size = UDim2.new(0.5, 0, 1, 0)
 HitboxTab.Position = UDim2.new(0, 0, 0, 0)
-HitboxTab.Text = "📦 ХИТБОКСЫ"
+HitboxTab.Text = "🎯 ГОЛОВА"
 HitboxTab.TextColor3 = Color3.fromRGB(255, 255, 255)
 HitboxTab.TextSize = 13
 HitboxTab.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
@@ -111,7 +112,7 @@ Content.Position = UDim2.new(0, 0, 0, 75)
 Content.BackgroundTransparency = 1
 Content.Parent = MainFrame
 
--- ===== ВКЛАДКА "ХИТБОКСЫ" =====
+-- ===== ВКЛАДКА "ГОЛОВА" =====
 local HitboxPanel = Instance.new("Frame")
 HitboxPanel.Size = UDim2.new(1, 0, 1, 0)
 HitboxPanel.BackgroundTransparency = 1
@@ -120,7 +121,7 @@ HitboxPanel.Parent = Content
 local HitboxInfo = Instance.new("TextLabel")
 HitboxInfo.Size = UDim2.new(0.9, 0, 0, 40)
 HitboxInfo.Position = UDim2.new(0.05, 0, 0.05, 0)
-HitboxInfo.Text = "Увеличивает все части тела врагов\nдо 100 раз (легче попасть)"
+HitboxInfo.Text = "Увеличивает ТОЛЬКО голову врагов\n(легче попасть в хедшот)"
 HitboxInfo.TextColor3 = Color3.fromRGB(180, 180, 210)
 HitboxInfo.TextSize = 12
 HitboxInfo.TextXAlignment = Enum.TextXAlignment.Center
@@ -131,9 +132,9 @@ HitboxInfo.Parent = HitboxPanel
 local HitboxBtn = Instance.new("TextButton")
 HitboxBtn.Size = UDim2.new(0.9, 0, 0, 50)
 HitboxBtn.Position = UDim2.new(0.05, 0, 0.25, 0)
-HitboxBtn.Text = "🎯 ВКЛЮЧИТЬ ХИТБОКСЫ"
+HitboxBtn.Text = "🎯 ВКЛЮЧИТЬ ХИТБОКС ГОЛОВЫ"
 HitboxBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-HitboxBtn.TextSize = 15
+HitboxBtn.TextSize = 14
 HitboxBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
 HitboxBtn.BorderSizePixel = 0
 HitboxBtn.Font = Enum.Font.GothamBold
@@ -156,7 +157,7 @@ HitboxStatus.Parent = HitboxPanel
 local ScaleLabel = Instance.new("TextLabel")
 ScaleLabel.Size = UDim2.new(0.9, 0, 0, 20)
 ScaleLabel.Position = UDim2.new(0.05, 0, 0.62, 0)
-ScaleLabel.Text = "РАЗМЕР ХИТБОКСА (1-100)"
+ScaleLabel.Text = "РАЗМЕР ГОЛОВЫ (1-100)"
 ScaleLabel.TextColor3 = Color3.fromRGB(180, 180, 210)
 ScaleLabel.TextSize = 11
 ScaleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -167,7 +168,7 @@ ScaleLabel.Parent = HitboxPanel
 local ScaleInput = Instance.new("TextBox")
 ScaleInput.Size = UDim2.new(0.9, 0, 0, 35)
 ScaleInput.Position = UDim2.new(0.05, 0, 0.7, 0)
-ScaleInput.Text = "3"
+ScaleInput.Text = "5"
 ScaleInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 ScaleInput.TextSize = 15
 ScaleInput.BackgroundColor3 = Color3.fromRGB(30, 33, 50)
@@ -186,7 +187,7 @@ QuickFrame.Position = UDim2.new(0.05, 0, 0.88, 0)
 QuickFrame.BackgroundTransparency = 1
 QuickFrame.Parent = HitboxPanel
 
-local quickValues = {3, 10, 30, 50, 100}
+local quickValues = {3, 5, 10, 30, 100}
 for i, val in ipairs(quickValues) do
     local qBtn = Instance.new("TextButton")
     qBtn.Size = UDim2.new(0.18, 0, 1, 0)
@@ -235,7 +236,7 @@ ViewPanel.Parent = Content
 local EspInfo = Instance.new("TextLabel")
 EspInfo.Size = UDim2.new(0.9, 0, 0, 40)
 EspInfo.Position = UDim2.new(0.05, 0, 0.05, 0)
-EspInfo.Text = "ESP — красная обводка вокруг\nвсех врагов на сервере"
+EspInfo.Text = "ESP — обводка вокруг всех врагов"
 EspInfo.TextColor3 = Color3.fromRGB(180, 180, 210)
 EspInfo.TextSize = 12
 EspInfo.TextXAlignment = Enum.TextXAlignment.Center
@@ -317,41 +318,29 @@ end
 
 -- ===== ФУНКЦИИ =====
 
--- Универсальный поиск частей (R6 и R15)
-local function GetHitboxParts(char)
-    local parts = {}
-    for _, part in ipairs(char:GetChildren()) do
-        if part:IsA("BasePart") then
-            table.insert(parts, part)
-        end
+-- Получить часть головы (работает и R6, и R15)
+local function GetHeadPart(char)
+    local head = char:FindFirstChild("Head")
+    if head and head:IsA("BasePart") then
+        return head
     end
-    return parts
+    return nil
 end
 
--- Проверка: живой ли игрок
-local function IsPlayerAlive(otherPlayer)
-    if otherPlayer == Player then return false end
-    local char = otherPlayer.Character
-    if not char then return false end
-    local humanoid = char:FindFirstChild("Humanoid")
-    if not humanoid then return false end
-    return humanoid.Health > 0
-end
-
--- ===== ХИТБОКСЫ =====
+-- ===== ХИТБОКС ГОЛОВЫ =====
 local function ApplyHitboxToPlayer(otherPlayer)
     if otherPlayer == Player then return end
     local char = otherPlayer.Character
     if not char then return end
     if char == Player.Character then return end
     
-    local parts = GetHitboxParts(char)
-    for _, part in ipairs(parts) do
-        -- Если ещё не сохранили — сохраняем оригинальный размер
-        if not OriginalSizes[part] then
-            OriginalSizes[part] = {Size = part.Size}
-            part.Size = part.Size * HitboxScale
-        end
+    local head = GetHeadPart(char)
+    if not head then return end
+    
+    -- Если ещё не сохранили — сохраняем оригинальный размер
+    if not OriginalSizes[head] then
+        OriginalSizes[head] = {Size = head.Size}
+        head.Size = head.Size * HitboxScale
     end
 end
 
@@ -363,7 +352,7 @@ function EnableHitbox()
         ApplyHitboxToPlayer(otherPlayer)
     end
     
-    HitboxBtn.Text = "🎯 ВЫКЛЮЧИТЬ ХИТБОКСЫ"
+    HitboxBtn.Text = "🎯 ВЫКЛЮЧИТЬ ХИТБОКС ГОЛОВЫ"
     HitboxBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
     HitboxStatus.Text = "● ВКЛЮЧЕНО (x" .. HitboxScale .. ")"
     HitboxStatus.TextColor3 = Color3.fromRGB(100, 200, 100)
@@ -379,7 +368,7 @@ function DisableHitbox()
     end
     OriginalSizes = {}
     
-    HitboxBtn.Text = "🎯 ВКЛЮЧИТЬ ХИТБОКСЫ"
+    HitboxBtn.Text = "🎯 ВКЛЮЧИТЬ ХИТБОКС ГОЛОВЫ"
     HitboxBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
     HitboxStatus.Text = "● ВЫКЛЮЧЕНО"
     HitboxStatus.TextColor3 = Color3.fromRGB(200, 80, 80)
@@ -388,7 +377,6 @@ end
 -- ===== ESP =====
 local function CreateHighlight(char)
     if not char then return nil end
-    -- Удаляем старый, если есть
     local old = char:FindFirstChild("MurderESP")
     if old then old:Destroy() end
     
@@ -413,7 +401,6 @@ local function ApplyEspToPlayer(otherPlayer)
     local humanoid = char:FindFirstChild("Humanoid")
     if not humanoid or humanoid.Health <= 0 then return end
     
-    -- Проверяем, есть ли уже обводка
     local existing = char:FindFirstChild("MurderESP")
     if not existing then
         local highlight = CreateHighlight(char)
@@ -447,7 +434,6 @@ function DisableEsp()
     end
     EspHighlights = {}
     
-    -- Чистим все оставшиеся
     for _, p in ipairs(game.Players:GetPlayers()) do
         if p.Character then
             local h = p.Character:FindFirstChild("MurderESP")
@@ -461,19 +447,17 @@ function DisableEsp()
     EspStatus.TextColor3 = Color3.fromRGB(200, 80, 80)
 end
 
--- ===== ГЛАВНЫЙ ЦИКЛ — ОБНОВЛЕНИЕ ВСЕХ ИГРОКОВ =====
+-- ===== ГЛАВНЫЙ ЦИКЛ =====
 task.spawn(function()
     while ScreenGui.Parent do
         task.wait(CheckInterval)
         
-        -- Обновляем ESP
         if EspActive then
             for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
                 ApplyEspToPlayer(otherPlayer)
             end
         end
         
-        -- Обновляем хитбоксы
         if HitboxActive then
             for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
                 ApplyHitboxToPlayer(otherPlayer)
@@ -482,18 +466,13 @@ task.spawn(function()
     end
 end)
 
--- ===== ОТСЛЕЖИВАНИЕ НОВЫХ ПЕРСОНАЖЕЙ =====
+-- ===== ОТСЛЕЖИВАНИЕ ПЕРСОНАЖЕЙ =====
 local function OnCharacterAdded(otherPlayer)
-    task.wait(1) -- ждём загрузки персонажа
-    if EspActive then
-        ApplyEspToPlayer(otherPlayer)
-    end
-    if HitboxActive then
-        ApplyHitboxToPlayer(otherPlayer)
-    end
+    task.wait(1)
+    if EspActive then ApplyEspToPlayer(otherPlayer) end
+    if HitboxActive then ApplyHitboxToPlayer(otherPlayer) end
 end
 
--- Подключаемся ко всем игрокам
 for _, p in ipairs(game.Players:GetPlayers()) do
     if p ~= Player then
         p.CharacterAdded:Connect(function()
@@ -502,7 +481,6 @@ for _, p in ipairs(game.Players:GetPlayers()) do
     end
 end
 
--- Новые игроки
 game.Players.PlayerAdded:Connect(function(p)
     p.CharacterAdded:Connect(function()
         OnCharacterAdded(p)
@@ -543,4 +521,4 @@ CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
-print("✅ Murder Duels загружено! Проверка каждые " .. CheckInterval .. " сек")
+print("✅ Murder Duels загружено! Хитбокс ТОЛЬКО на голову.")
