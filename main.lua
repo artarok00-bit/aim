@@ -1,5 +1,5 @@
 -- [[ AIMBOT для Murder Duels — ВЫБОР ЦЕЛИ ]]
--- Выбираешь игрока из списка — наводится только на него
+-- Выбираешь игрока из списка — наводится на ТЕЛО (Torso / UpperTorso)
 -- Зажми СРЕДНЮЮ кнопку мыши для наводки
 
 local Player = game.Players.LocalPlayer
@@ -12,7 +12,8 @@ local AimbotActive = true
 local IsAiming = false
 local MaxDistance = 2000
 local Smoothness = 0.5
-local SelectedPlayer = nil  -- выбранная цель
+local SelectedPlayer = nil
+local RefreshCooldown = 5 -- обновление списка раз в 5 секунд (медленнее)
 
 -- ===== GUI =====
 local ScreenGui = Instance.new("ScreenGui")
@@ -124,7 +125,7 @@ local ListCorner = Instance.new("UICorner")
 ListCorner.CornerRadius = UDim.new(0, 6)
 ListCorner.Parent = PlayerList
 
--- Кнопка сброса выбора
+-- Кнопка сброса
 local ResetBtn = Instance.new("TextButton")
 ResetBtn.Size = UDim2.new(0.9, 0, 0, 25)
 ResetBtn.Position = UDim2.new(0.05, 0, 0.85, 0)
@@ -141,7 +142,6 @@ ResetCorner.Parent = ResetBtn
 
 -- ===== ФУНКЦИЯ ОБНОВЛЕНИЯ СПИСКА =====
 local function RefreshPlayerList()
-    -- Очищаем список
     for _, child in pairs(PlayerList:GetChildren()) do
         if child:IsA("TextButton") then
             child:Destroy()
@@ -158,7 +158,6 @@ local function RefreshPlayerList()
         end
     end
 
-    -- Сортируем: сначала живые
     table.sort(players, function(a, b)
         return a.alive and not b.alive
     end)
@@ -185,15 +184,15 @@ local function RefreshPlayerList()
             SelectedPlayer = data.player
             SelectedLabel.Text = "Цель: " .. data.player.Name
             SelectedLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
-            RefreshPlayerList() -- обновляем подсветку
+            RefreshPlayerList()
         end)
     end
 end
 
--- ===== ФУНКЦИЯ ПОЛУЧЕНИЯ ЦЕЛИ =====
-local function GetTargetPart(char)
-    return char:FindFirstChild("Head")
-        or char:FindFirstChild("UpperTorso")
+-- ===== ФУНКЦИЯ ПОЛУЧЕНИЯ ТЕЛА (НЕ ГОЛОВЫ) =====
+local function GetTargetBody(char)
+    -- Приоритет: UpperTorso (R15), Torso (R6), HumanoidRootPart
+    return char:FindFirstChild("UpperTorso")
         or char:FindFirstChild("Torso")
         or char:FindFirstChild("HumanoidRootPart")
 end
@@ -207,10 +206,9 @@ local function GetSelectedTarget()
     local humanoid = char:FindFirstChild("Humanoid")
     if not humanoid or humanoid.Health <= 0 then return nil, nil end
     
-    local part = GetTargetPart(char)
+    local part = GetTargetBody(char)
     if not part then return nil, nil end
     
-    -- Проверяем что это не моя часть
     local myChar = Player.Character
     if myChar and part:IsDescendantOf(myChar) then return nil, nil end
     
@@ -268,10 +266,10 @@ CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
--- Автообновление списка каждые 3 секунды
+-- Автообновление раз в 5 секунд (медленнее)
 task.spawn(function()
     while ScreenGui.Parent do
-        task.wait(3)
+        task.wait(RefreshCooldown)
         if ScreenGui.Parent then
             RefreshPlayerList()
         end
@@ -279,4 +277,4 @@ task.spawn(function()
 end)
 
 RefreshPlayerList()
-print("✅ AIMBOT загружен! Выбери цель из списка.")
+print("✅ AIMBOT загружен! Наводка на ТЕЛО, список обновляется раз в 5 сек.")
