@@ -1,6 +1,6 @@
--- [[ Murder Duels — ХИТБОКСЫ + ESP ]]
--- Вкладка "ХИТБОКСЫ": увеличение хитбоксов
--- Вкладка "ВИД": ESP (красная обводка) + подсветка
+-- [[ Murder Duels — ХИТБОКСЫ (до 100) + ESP ]]
+-- Вкладка "ХИТБОКСЫ": увеличение хитбоксов до 100 раз
+-- Вкладка "ВИД": ESP (красная обводка)
 
 local Player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -16,7 +16,7 @@ local OriginalSizes = {}
 -- ===== ESP =====
 local EspActive = false
 local EspColor = Color3.fromRGB(255, 0, 0)
-local EspHighlights = {} -- [player] = highlight
+local EspHighlights = {}
 
 -- ===== GUI =====
 local ScreenGui = Instance.new("ScreenGui")
@@ -121,7 +121,7 @@ HitboxPanel.Parent = Content
 local HitboxInfo = Instance.new("TextLabel")
 HitboxInfo.Size = UDim2.new(0.9, 0, 0, 40)
 HitboxInfo.Position = UDim2.new(0.05, 0, 0.05, 0)
-HitboxInfo.Text = "Увеличивает все части тела врагов\nчтобы было легче попасть"
+HitboxInfo.Text = "Увеличивает все части тела врагов\nдо 100 раз (легче попасть)"
 HitboxInfo.TextColor3 = Color3.fromRGB(180, 180, 210)
 HitboxInfo.TextSize = 12
 HitboxInfo.TextXAlignment = Enum.TextXAlignment.Center
@@ -157,7 +157,7 @@ HitboxStatus.Parent = HitboxPanel
 local ScaleLabel = Instance.new("TextLabel")
 ScaleLabel.Size = UDim2.new(0.9, 0, 0, 20)
 ScaleLabel.Position = UDim2.new(0.05, 0, 0.62, 0)
-ScaleLabel.Text = "РАЗМЕР ХИТБОКСА (х раз)"
+ScaleLabel.Text = "РАЗМЕР ХИТБОКСА (1-100)"
 ScaleLabel.TextColor3 = Color3.fromRGB(180, 180, 210)
 ScaleLabel.TextSize = 11
 ScaleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -180,9 +180,42 @@ local ScaleCorner = Instance.new("UICorner")
 ScaleCorner.CornerRadius = UDim.new(0, 6)
 ScaleCorner.Parent = ScaleInput
 
+-- Быстрые кнопки
+local QuickFrame = Instance.new("Frame")
+QuickFrame.Size = UDim2.new(0.9, 0, 0, 30)
+QuickFrame.Position = UDim2.new(0.05, 0, 0.88, 0)
+QuickFrame.BackgroundTransparency = 1
+QuickFrame.Parent = HitboxPanel
+
+local quickValues = {3, 10, 30, 50, 100}
+for i, val in ipairs(quickValues) do
+    local qBtn = Instance.new("TextButton")
+    qBtn.Size = UDim2.new(0.18, 0, 1, 0)
+    qBtn.Position = UDim2.new((i-1) * 0.2, 0, 0, 0)
+    qBtn.Text = tostring(val)
+    qBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    qBtn.TextSize = 11
+    qBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 100)
+    qBtn.BorderSizePixel = 0
+    qBtn.Font = Enum.Font.GothamBold
+    qBtn.Parent = QuickFrame
+    local qCorner = Instance.new("UICorner")
+    qCorner.CornerRadius = UDim.new(0, 5)
+    qCorner.Parent = qBtn
+    
+    qBtn.MouseButton1Click:Connect(function()
+        HitboxScale = val
+        ScaleInput.Text = tostring(val)
+        if HitboxActive then
+            DisableHitbox()
+            EnableHitbox()
+        end
+    end)
+end
+
 ScaleInput.FocusLost:Connect(function()
     local val = tonumber(ScaleInput.Text)
-    if val and val >= 1 and val <= 20 then
+    if val and val >= 1 and val <= 100 then
         HitboxScale = val
         if HitboxActive then
             DisableHitbox()
@@ -247,7 +280,6 @@ EspColorLabel.BackgroundTransparency = 1
 EspColorLabel.Font = Enum.Font.Gotham
 EspColorLabel.Parent = ViewPanel
 
--- Кнопки выбора цвета
 local ColorsFrame = Instance.new("Frame")
 ColorsFrame.Size = UDim2.new(0.9, 0, 0, 40)
 ColorsFrame.Position = UDim2.new(0.05, 0, 0.7, 0)
@@ -255,10 +287,10 @@ ColorsFrame.BackgroundTransparency = 1
 ColorsFrame.Parent = ViewPanel
 
 local colors = {
-    {name = "Красный", color = Color3.fromRGB(255, 0, 0)},
-    {name = "Зелёный", color = Color3.fromRGB(0, 255, 0)},
-    {name = "Синий", color = Color3.fromRGB(0, 150, 255)},
-    {name = "Фиолетовый", color = Color3.fromRGB(180, 0, 255)}
+    {color = Color3.fromRGB(255, 0, 0)},
+    {color = Color3.fromRGB(0, 255, 0)},
+    {color = Color3.fromRGB(0, 150, 255)},
+    {color = Color3.fromRGB(180, 0, 255)}
 }
 
 for i, c in ipairs(colors) do
@@ -275,7 +307,6 @@ for i, c in ipairs(colors) do
     
     colorBtn.MouseButton1Click:Connect(function()
         EspColor = c.color
-        -- Обновляем все существующие обводки
         for _, highlight in pairs(EspHighlights) do
             if highlight and highlight.Parent then
                 highlight.FillColor = EspColor
@@ -365,7 +396,6 @@ local function RemoveAllHighlights()
     end
     EspHighlights = {}
     
-    -- На всякий случай чистим все Highlight в персонажах
     for _, p in ipairs(game.Players:GetPlayers()) do
         if p.Character then
             for _, obj in ipairs(p.Character:GetChildren()) do
@@ -410,16 +440,13 @@ function DisableEsp()
     EspStatus.TextColor3 = Color3.fromRGB(200, 80, 80)
 end
 
--- ===== ОБНОВЛЕНИЕ ESP (для новых игроков) =====
 local function UpdateEsp()
     if not EspActive then return end
-    
     local myChar = Player.Character
     
     for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
         if otherPlayer ~= Player then
             local char = otherPlayer.Character
-            -- Если игрок живой и у него нет обводки
             if char and char ~= myChar then
                 local humanoid = char:FindFirstChild("Humanoid")
                 if humanoid and humanoid.Health > 0 then
@@ -431,22 +458,12 @@ local function UpdateEsp()
                     end
                 end
             end
-        else
-            -- Удаляем обводку, если игрок умер или респавнился
-            if EspHighlights[otherPlayer] then
-                if not char or not char:FindFirstChild("Humanoid") or char:FindFirstChild("Humanoid").Health <= 0 then
-                    EspHighlights[otherPlayer]:Destroy()
-                    EspHighlights[otherPlayer] = nil
-                end
-            end
         end
     end
 end
 
--- ===== ОБНОВЛЕНИЕ ХИТБОКСОВ (для новых игроков) =====
 local function UpdateHitbox()
     if not HitboxActive then return end
-    
     local myChar = Player.Character
     
     for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
@@ -486,19 +503,11 @@ end)
 
 -- ===== КНОПКИ =====
 HitboxBtn.MouseButton1Click:Connect(function()
-    if HitboxActive then
-        DisableHitbox()
-    else
-        EnableHitbox()
-    end
+    if HitboxActive then DisableHitbox() else EnableHitbox() end
 end)
 
 EspBtn.MouseButton1Click:Connect(function()
-    if EspActive then
-        DisableEsp()
-    else
-        EnableEsp()
-    end
+    if EspActive then DisableEsp() else EnableEsp() end
 end)
 
 CloseBtn.MouseButton1Click:Connect(function()
@@ -518,17 +527,12 @@ task.spawn(function()
     end
 end)
 
--- ===== ОБРАБОТКА РЕСПАВНА =====
 Player.CharacterAdded:Connect(function()
     task.wait(1)
-    if EspActive then
-        UpdateEsp()
-    end
-    if HitboxActive then
-        UpdateHitbox()
-    end
+    if EspActive then UpdateEsp() end
+    if HitboxActive then UpdateHitbox() end
 end)
 
 print("✅ Murder Duels загружено!")
-print("📦 Вкладка ХИТБОКСЫ")
-print("👁 Вкладка ВИД (ESP)")
+print("📦 ХИТБОКСЫ до 100")
+print("👁 ESP с выбором цвета")
