@@ -1,23 +1,22 @@
--- [[ Murder Duels — AIMBOT + ХИТБОКСЫ ]]
--- Вкладка "АИМ": выбор цели, наводка на тело
--- Вкладка "ХИТБОКСЫ": увеличение хитбоксов врагов
+-- [[ Murder Duels — ХИТБОКСЫ + ESP ]]
+-- Вкладка "ХИТБОКСЫ": увеличение хитбоксов
+-- Вкладка "ВИД": ESP (красная обводка) + подсветка
 
 local Player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local Camera = workspace.CurrentCamera
 
 -- ===== НАСТРОЙКИ =====
-local AimbotActive = true
-local IsAiming = false
-local Smoothness = 0.5
-local SelectedPlayer = nil
 local RefreshCooldown = 5
 
 -- ===== ХИТБОКСЫ =====
 local HitboxScale = 3
 local HitboxActive = false
 local OriginalSizes = {}
+
+-- ===== ESP =====
+local EspActive = false
+local EspColor = Color3.fromRGB(255, 0, 0)
+local EspHighlights = {} -- [player] = highlight
 
 -- ===== GUI =====
 local ScreenGui = Instance.new("ScreenGui")
@@ -26,8 +25,8 @@ ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 320, 0, 420)
-MainFrame.Position = UDim2.new(0.5, -160, 0.5, -210)
+MainFrame.Size = UDim2.new(0, 320, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -160, 0.5, -200)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 MainFrame.BorderSizePixel = 0
 MainFrame.ClipsDescendants = true
@@ -84,27 +83,27 @@ TabBar.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
 TabBar.BorderSizePixel = 0
 TabBar.Parent = MainFrame
 
-local AimTab = Instance.new("TextButton")
-AimTab.Size = UDim2.new(0.5, 0, 1, 0)
-AimTab.Position = UDim2.new(0, 0, 0, 0)
-AimTab.Text = "🎯 АИМ"
-AimTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-AimTab.TextSize = 13
-AimTab.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
-AimTab.BorderSizePixel = 0
-AimTab.Font = Enum.Font.GothamSemibold
-AimTab.Parent = TabBar
-
 local HitboxTab = Instance.new("TextButton")
 HitboxTab.Size = UDim2.new(0.5, 0, 1, 0)
-HitboxTab.Position = UDim2.new(0.5, 0, 0, 0)
+HitboxTab.Position = UDim2.new(0, 0, 0, 0)
 HitboxTab.Text = "📦 ХИТБОКСЫ"
-HitboxTab.TextColor3 = Color3.fromRGB(180, 180, 210)
+HitboxTab.TextColor3 = Color3.fromRGB(255, 255, 255)
 HitboxTab.TextSize = 13
-HitboxTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
+HitboxTab.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
 HitboxTab.BorderSizePixel = 0
 HitboxTab.Font = Enum.Font.GothamSemibold
 HitboxTab.Parent = TabBar
+
+local ViewTab = Instance.new("TextButton")
+ViewTab.Size = UDim2.new(0.5, 0, 1, 0)
+ViewTab.Position = UDim2.new(0.5, 0, 0, 0)
+ViewTab.Text = "👁 ВИД"
+ViewTab.TextColor3 = Color3.fromRGB(180, 180, 210)
+ViewTab.TextSize = 13
+ViewTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
+ViewTab.BorderSizePixel = 0
+ViewTab.Font = Enum.Font.GothamSemibold
+ViewTab.Parent = TabBar
 
 -- ===== КОНТЕНТ =====
 local Content = Instance.new("Frame")
@@ -113,79 +112,10 @@ Content.Position = UDim2.new(0, 0, 0, 75)
 Content.BackgroundTransparency = 1
 Content.Parent = MainFrame
 
--- ===== ВКЛАДКА "АИМ" =====
-local AimPanel = Instance.new("Frame")
-AimPanel.Size = UDim2.new(1, 0, 1, 0)
-AimPanel.BackgroundTransparency = 1
-AimPanel.Parent = Content
-
-local StatusText = Instance.new("TextLabel")
-StatusText.Size = UDim2.new(1, 0, 0, 20)
-StatusText.Position = UDim2.new(0, 0, 0, 5)
-StatusText.Text = "● СКМ — наводка на выбранного"
-StatusText.TextColor3 = Color3.fromRGB(100, 200, 100)
-StatusText.TextSize = 11
-StatusText.TextXAlignment = Enum.TextXAlignment.Center
-StatusText.BackgroundTransparency = 1
-StatusText.Font = Enum.Font.Gotham
-StatusText.Parent = AimPanel
-
-local SelectedLabel = Instance.new("TextLabel")
-SelectedLabel.Size = UDim2.new(1, 0, 0, 22)
-SelectedLabel.Position = UDim2.new(0, 0, 0, 28)
-SelectedLabel.Text = "Цель: НЕ ВЫБРАНА"
-SelectedLabel.TextColor3 = Color3.fromRGB(255, 150, 100)
-SelectedLabel.TextSize = 12
-SelectedLabel.TextXAlignment = Enum.TextXAlignment.Center
-SelectedLabel.BackgroundTransparency = 1
-SelectedLabel.Font = Enum.Font.GothamBold
-SelectedLabel.Parent = AimPanel
-
-local RefreshBtn = Instance.new("TextButton")
-RefreshBtn.Size = UDim2.new(0.9, 0, 0, 28)
-RefreshBtn.Position = UDim2.new(0.05, 0, 0.15, 0)
-RefreshBtn.Text = "🔄 ОБНОВИТЬ СПИСОК"
-RefreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-RefreshBtn.TextSize = 12
-RefreshBtn.BackgroundColor3 = Color3.fromRGB(123, 63, 252)
-RefreshBtn.BorderSizePixel = 0
-RefreshBtn.Font = Enum.Font.GothamSemibold
-RefreshBtn.Parent = AimPanel
-local RefreshCorner = Instance.new("UICorner")
-RefreshCorner.CornerRadius = UDim.new(0, 6)
-RefreshCorner.Parent = RefreshBtn
-
-local PlayerList = Instance.new("ScrollingFrame")
-PlayerList.Size = UDim2.new(0.9, 0, 0, 200)
-PlayerList.Position = UDim2.new(0.05, 0, 0.25, 0)
-PlayerList.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
-PlayerList.BorderSizePixel = 0
-PlayerList.ScrollBarThickness = 4
-PlayerList.CanvasSize = UDim2.new(0, 0, 0, 0)
-PlayerList.Parent = AimPanel
-local ListCorner = Instance.new("UICorner")
-ListCorner.CornerRadius = UDim.new(0, 6)
-ListCorner.Parent = PlayerList
-
-local ResetBtn = Instance.new("TextButton")
-ResetBtn.Size = UDim2.new(0.9, 0, 0, 28)
-ResetBtn.Position = UDim2.new(0.05, 0, 0.85, 0)
-ResetBtn.Text = "❌ СБРОСИТЬ ВЫБОР"
-ResetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ResetBtn.TextSize = 12
-ResetBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 80)
-ResetBtn.BorderSizePixel = 0
-ResetBtn.Font = Enum.Font.GothamSemibold
-ResetBtn.Parent = AimPanel
-local ResetCorner = Instance.new("UICorner")
-ResetCorner.CornerRadius = UDim.new(0, 6)
-ResetCorner.Parent = ResetBtn
-
 -- ===== ВКЛАДКА "ХИТБОКСЫ" =====
 local HitboxPanel = Instance.new("Frame")
 HitboxPanel.Size = UDim2.new(1, 0, 1, 0)
 HitboxPanel.BackgroundTransparency = 1
-HitboxPanel.Visible = false
 HitboxPanel.Parent = Content
 
 local HitboxInfo = Instance.new("TextLabel")
@@ -201,7 +131,7 @@ HitboxInfo.Parent = HitboxPanel
 
 local HitboxBtn = Instance.new("TextButton")
 HitboxBtn.Size = UDim2.new(0.9, 0, 0, 50)
-HitboxBtn.Position = UDim2.new(0.05, 0, 0.2, 0)
+HitboxBtn.Position = UDim2.new(0.05, 0, 0.25, 0)
 HitboxBtn.Text = "🎯 ВКЛЮЧИТЬ ХИТБОКСЫ"
 HitboxBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 HitboxBtn.TextSize = 15
@@ -215,7 +145,7 @@ HitboxCorner.Parent = HitboxBtn
 
 local HitboxStatus = Instance.new("TextLabel")
 HitboxStatus.Size = UDim2.new(0.9, 0, 0, 22)
-HitboxStatus.Position = UDim2.new(0.05, 0, 0.4, 0)
+HitboxStatus.Position = UDim2.new(0.05, 0, 0.5, 0)
 HitboxStatus.Text = "● ВЫКЛЮЧЕНО"
 HitboxStatus.TextColor3 = Color3.fromRGB(200, 80, 80)
 HitboxStatus.TextSize = 13
@@ -224,10 +154,9 @@ HitboxStatus.BackgroundTransparency = 1
 HitboxStatus.Font = Enum.Font.Gotham
 HitboxStatus.Parent = HitboxPanel
 
--- Настройка размера хитбокса
 local ScaleLabel = Instance.new("TextLabel")
 ScaleLabel.Size = UDim2.new(0.9, 0, 0, 20)
-ScaleLabel.Position = UDim2.new(0.05, 0, 0.52, 0)
+ScaleLabel.Position = UDim2.new(0.05, 0, 0.62, 0)
 ScaleLabel.Text = "РАЗМЕР ХИТБОКСА (х раз)"
 ScaleLabel.TextColor3 = Color3.fromRGB(180, 180, 210)
 ScaleLabel.TextSize = 11
@@ -238,7 +167,7 @@ ScaleLabel.Parent = HitboxPanel
 
 local ScaleInput = Instance.new("TextBox")
 ScaleInput.Size = UDim2.new(0.9, 0, 0, 35)
-ScaleInput.Position = UDim2.new(0.05, 0, 0.6, 0)
+ScaleInput.Position = UDim2.new(0.05, 0, 0.7, 0)
 ScaleInput.Text = "3"
 ScaleInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 ScaleInput.TextSize = 15
@@ -255,7 +184,6 @@ ScaleInput.FocusLost:Connect(function()
     local val = tonumber(ScaleInput.Text)
     if val and val >= 1 and val <= 20 then
         HitboxScale = val
-        -- Если хитбоксы включены — применяем новые размеры
         if HitboxActive then
             DisableHitbox()
             EnableHitbox()
@@ -264,6 +192,98 @@ ScaleInput.FocusLost:Connect(function()
         ScaleInput.Text = tostring(HitboxScale)
     end
 end)
+
+-- ===== ВКЛАДКА "ВИД" =====
+local ViewPanel = Instance.new("Frame")
+ViewPanel.Size = UDim2.new(1, 0, 1, 0)
+ViewPanel.BackgroundTransparency = 1
+ViewPanel.Visible = false
+ViewPanel.Parent = Content
+
+local EspInfo = Instance.new("TextLabel")
+EspInfo.Size = UDim2.new(0.9, 0, 0, 40)
+EspInfo.Position = UDim2.new(0.05, 0, 0.05, 0)
+EspInfo.Text = "ESP — красная обводка вокруг\nвсех врагов на сервере"
+EspInfo.TextColor3 = Color3.fromRGB(180, 180, 210)
+EspInfo.TextSize = 12
+EspInfo.TextXAlignment = Enum.TextXAlignment.Center
+EspInfo.BackgroundTransparency = 1
+EspInfo.Font = Enum.Font.Gotham
+EspInfo.Parent = ViewPanel
+
+local EspBtn = Instance.new("TextButton")
+EspBtn.Size = UDim2.new(0.9, 0, 0, 50)
+EspBtn.Position = UDim2.new(0.05, 0, 0.25, 0)
+EspBtn.Text = "👁 ВКЛЮЧИТЬ ESP"
+EspBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+EspBtn.TextSize = 15
+EspBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+EspBtn.BorderSizePixel = 0
+EspBtn.Font = Enum.Font.GothamBold
+EspBtn.Parent = ViewPanel
+local EspCorner = Instance.new("UICorner")
+EspCorner.CornerRadius = UDim.new(0, 8)
+EspCorner.Parent = EspBtn
+
+local EspStatus = Instance.new("TextLabel")
+EspStatus.Size = UDim2.new(0.9, 0, 0, 22)
+EspStatus.Position = UDim2.new(0.05, 0, 0.5, 0)
+EspStatus.Text = "● ВЫКЛЮЧЕНО"
+EspStatus.TextColor3 = Color3.fromRGB(200, 80, 80)
+EspStatus.TextSize = 13
+EspStatus.TextXAlignment = Enum.TextXAlignment.Center
+EspStatus.BackgroundTransparency = 1
+EspStatus.Font = Enum.Font.Gotham
+EspStatus.Parent = ViewPanel
+
+local EspColorLabel = Instance.new("TextLabel")
+EspColorLabel.Size = UDim2.new(0.9, 0, 0, 20)
+EspColorLabel.Position = UDim2.new(0.05, 0, 0.62, 0)
+EspColorLabel.Text = "ЦВЕТ ОБВОДКИ"
+EspColorLabel.TextColor3 = Color3.fromRGB(180, 180, 210)
+EspColorLabel.TextSize = 11
+EspColorLabel.TextXAlignment = Enum.TextXAlignment.Left
+EspColorLabel.BackgroundTransparency = 1
+EspColorLabel.Font = Enum.Font.Gotham
+EspColorLabel.Parent = ViewPanel
+
+-- Кнопки выбора цвета
+local ColorsFrame = Instance.new("Frame")
+ColorsFrame.Size = UDim2.new(0.9, 0, 0, 40)
+ColorsFrame.Position = UDim2.new(0.05, 0, 0.7, 0)
+ColorsFrame.BackgroundTransparency = 1
+ColorsFrame.Parent = ViewPanel
+
+local colors = {
+    {name = "Красный", color = Color3.fromRGB(255, 0, 0)},
+    {name = "Зелёный", color = Color3.fromRGB(0, 255, 0)},
+    {name = "Синий", color = Color3.fromRGB(0, 150, 255)},
+    {name = "Фиолетовый", color = Color3.fromRGB(180, 0, 255)}
+}
+
+for i, c in ipairs(colors) do
+    local colorBtn = Instance.new("TextButton")
+    colorBtn.Size = UDim2.new(0.22, 0, 1, 0)
+    colorBtn.Position = UDim2.new((i-1) * 0.26, 0, 0, 0)
+    colorBtn.Text = ""
+    colorBtn.BackgroundColor3 = c.color
+    colorBtn.BorderSizePixel = 0
+    colorBtn.Parent = ColorsFrame
+    local colorCorner = Instance.new("UICorner")
+    colorCorner.CornerRadius = UDim.new(0, 6)
+    colorCorner.Parent = colorBtn
+    
+    colorBtn.MouseButton1Click:Connect(function()
+        EspColor = c.color
+        -- Обновляем все существующие обводки
+        for _, highlight in pairs(EspHighlights) do
+            if highlight and highlight.Parent then
+                highlight.FillColor = EspColor
+                highlight.OutlineColor = EspColor
+            end
+        end
+    end)
+end
 
 -- ===== ФУНКЦИИ ХИТБОКСОВ =====
 local function GetHitboxParts(char)
@@ -321,127 +341,147 @@ function DisableHitbox()
     HitboxStatus.TextColor3 = Color3.fromRGB(200, 80, 80)
 end
 
--- ===== ФУНКЦИЯ СПИСКА =====
-local function RefreshPlayerList()
-    for _, child in pairs(PlayerList:GetChildren()) do
-        if child:IsA("TextButton") then
-            child:Destroy()
+-- ===== ФУНКЦИИ ESP =====
+local function CreateHighlight(char)
+    if not char then return nil end
+    
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "MurderESP"
+    highlight.FillColor = EspColor
+    highlight.FillTransparency = 0.7
+    highlight.OutlineColor = EspColor
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.Parent = char
+    
+    return highlight
+end
+
+local function RemoveAllHighlights()
+    for _, highlight in pairs(EspHighlights) do
+        if highlight and highlight.Parent then
+            highlight:Destroy()
         end
     end
-
-    local players = {}
+    EspHighlights = {}
+    
+    -- На всякий случай чистим все Highlight в персонажах
     for _, p in ipairs(game.Players:GetPlayers()) do
-        if p ~= Player then
-            local char = p.Character
-            local humanoid = char and char:FindFirstChild("Humanoid")
-            local alive = humanoid and humanoid.Health > 0
-            table.insert(players, {player = p, alive = alive})
+        if p.Character then
+            for _, obj in ipairs(p.Character:GetChildren()) do
+                if obj:IsA("Highlight") and obj.Name == "MurderESP" then
+                    obj:Destroy()
+                end
+            end
         end
     end
-
-    table.sort(players, function(a, b)
-        return a.alive and not b.alive
-    end)
-
-    PlayerList.CanvasSize = UDim2.new(0, 0, 0, #players * 30)
-
-    for i, data in ipairs(players) do
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(1, -6, 0, 26)
-        btn.Position = UDim2.new(0, 3, 0, (i-1) * 30 + 3)
-        btn.Text = data.player.Name .. (data.alive and " 🟢" or " 💀")
-        btn.TextColor3 = data.alive and Color3.fromRGB(220, 220, 255) or Color3.fromRGB(150, 150, 150)
-        btn.TextSize = 11
-        btn.BackgroundColor3 = (SelectedPlayer == data.player) and Color3.fromRGB(123, 63, 252) or Color3.fromRGB(35, 38, 55)
-        btn.BorderSizePixel = 0
-        btn.Font = Enum.Font.Gotham
-        btn.Parent = PlayerList
-
-        local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 4)
-        btnCorner.Parent = btn
-
-        btn.MouseButton1Click:Connect(function()
-            SelectedPlayer = data.player
-            SelectedLabel.Text = "Цель: " .. data.player.Name
-            SelectedLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
-            RefreshPlayerList()
-        end)
-    end
 end
 
--- ===== ПОИСК ЦЕЛИ =====
-local function GetTargetBody(char)
-    return char:FindFirstChild("UpperTorso")
-        or char:FindFirstChild("Torso")
-        or char:FindFirstChild("HumanoidRootPart")
-end
-
-local function GetSelectedTarget()
-    if not SelectedPlayer then return nil, nil end
-    local char = SelectedPlayer.Character
-    if not char then return nil, nil end
-    local humanoid = char:FindFirstChild("Humanoid")
-    if not humanoid or humanoid.Health <= 0 then return nil, nil end
-    local part = GetTargetBody(char)
-    if not part then return nil, nil end
+function EnableEsp()
+    EspActive = true
+    EspHighlights = {}
     local myChar = Player.Character
-    if myChar and part:IsDescendantOf(myChar) then return nil, nil end
-    return SelectedPlayer, part
+    
+    for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
+        if otherPlayer ~= Player then
+            local char = otherPlayer.Character
+            if char and char ~= myChar then
+                local highlight = CreateHighlight(char)
+                if highlight then
+                    EspHighlights[otherPlayer] = highlight
+                end
+            end
+        end
+    end
+    
+    EspBtn.Text = "👁 ВЫКЛЮЧИТЬ ESP"
+    EspBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
+    EspStatus.Text = "● ВКЛЮЧЕНО"
+    EspStatus.TextColor3 = Color3.fromRGB(100, 200, 100)
 end
 
--- ===== ОСНОВНОЙ ЦИКЛ =====
-RunService.RenderStepped:Connect(function()
-    if not AimbotActive then return end
-    if not IsAiming then return end
+function DisableEsp()
+    EspActive = false
+    RemoveAllHighlights()
+    
+    EspBtn.Text = "👁 ВКЛЮЧИТЬ ESP"
+    EspBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+    EspStatus.Text = "● ВЫКЛЮЧЕНО"
+    EspStatus.TextColor3 = Color3.fromRGB(200, 80, 80)
+end
 
-    local target, targetPart = GetSelectedTarget()
-    if target and targetPart then
-        local currentCFrame = Camera.CFrame
-        local lookAt = CFrame.lookAt(currentCFrame.Position, targetPart.Position)
-        Camera.CFrame = currentCFrame:Lerp(lookAt, Smoothness)
-    end
-end)
-
--- ===== СРЕДНЯЯ КНОПКА МЫШИ =====
-UserInputService.InputBegan:Connect(function(input, gp)
-    if gp then return end
-    if input.UserInputType == Enum.UserInputType.MouseButton3 then
-        if AimbotActive and SelectedPlayer then
-            IsAiming = true
-            StatusText.Text = "● НАВОДКА НА " .. SelectedPlayer.Name
-            StatusText.TextColor3 = Color3.fromRGB(255, 200, 0)
+-- ===== ОБНОВЛЕНИЕ ESP (для новых игроков) =====
+local function UpdateEsp()
+    if not EspActive then return end
+    
+    local myChar = Player.Character
+    
+    for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
+        if otherPlayer ~= Player then
+            local char = otherPlayer.Character
+            -- Если игрок живой и у него нет обводки
+            if char and char ~= myChar then
+                local humanoid = char:FindFirstChild("Humanoid")
+                if humanoid and humanoid.Health > 0 then
+                    if not EspHighlights[otherPlayer] or not EspHighlights[otherPlayer].Parent then
+                        local highlight = CreateHighlight(char)
+                        if highlight then
+                            EspHighlights[otherPlayer] = highlight
+                        end
+                    end
+                end
+            end
+        else
+            -- Удаляем обводку, если игрок умер или респавнился
+            if EspHighlights[otherPlayer] then
+                if not char or not char:FindFirstChild("Humanoid") or char:FindFirstChild("Humanoid").Health <= 0 then
+                    EspHighlights[otherPlayer]:Destroy()
+                    EspHighlights[otherPlayer] = nil
+                end
+            end
         end
     end
-end)
+end
 
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton3 then
-        IsAiming = false
-        if AimbotActive then
-            StatusText.Text = "● СКМ — наводка на выбранного"
-            StatusText.TextColor3 = Color3.fromRGB(100, 200, 100)
+-- ===== ОБНОВЛЕНИЕ ХИТБОКСОВ (для новых игроков) =====
+local function UpdateHitbox()
+    if not HitboxActive then return end
+    
+    local myChar = Player.Character
+    
+    for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
+        if otherPlayer ~= Player then
+            local char = otherPlayer.Character
+            if char and char ~= myChar then
+                local parts = GetHitboxParts(char)
+                for _, part in ipairs(parts) do
+                    if not OriginalSizes[part] then
+                        OriginalSizes[part] = {Size = part.Size / HitboxScale}
+                        part.Size = part.Size * HitboxScale
+                    end
+                end
+            end
         end
     end
-end)
+end
 
 -- ===== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК =====
-AimTab.MouseButton1Click:Connect(function()
-    AimPanel.Visible = true
-    HitboxPanel.Visible = false
-    AimTab.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
-    AimTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-    HitboxTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
-    HitboxTab.TextColor3 = Color3.fromRGB(180, 180, 210)
-end)
-
 HitboxTab.MouseButton1Click:Connect(function()
-    AimPanel.Visible = false
     HitboxPanel.Visible = true
+    ViewPanel.Visible = false
     HitboxTab.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
     HitboxTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-    AimTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
-    AimTab.TextColor3 = Color3.fromRGB(180, 180, 210)
+    ViewTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
+    ViewTab.TextColor3 = Color3.fromRGB(180, 180, 210)
+end)
+
+ViewTab.MouseButton1Click:Connect(function()
+    HitboxPanel.Visible = false
+    ViewPanel.Visible = true
+    ViewTab.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
+    ViewTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+    HitboxTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
+    HitboxTab.TextColor3 = Color3.fromRGB(180, 180, 210)
 end)
 
 -- ===== КНОПКИ =====
@@ -453,47 +493,42 @@ HitboxBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-RefreshBtn.MouseButton1Click:Connect(RefreshPlayerList)
-
-ResetBtn.MouseButton1Click:Connect(function()
-    SelectedPlayer = nil
-    SelectedLabel.Text = "Цель: НЕ ВЫБРАНА"
-    SelectedLabel.TextColor3 = Color3.fromRGB(255, 150, 100)
-    RefreshPlayerList()
+EspBtn.MouseButton1Click:Connect(function()
+    if EspActive then
+        DisableEsp()
+    else
+        EnableEsp()
+    end
 end)
 
 CloseBtn.MouseButton1Click:Connect(function()
     if HitboxActive then DisableHitbox() end
+    if EspActive then DisableEsp() end
     ScreenGui:Destroy()
 end)
 
--- Автообновление
+-- ===== АВТООБНОВЛЕНИЕ =====
 task.spawn(function()
     while ScreenGui.Parent do
         task.wait(RefreshCooldown)
         if ScreenGui.Parent then
-            RefreshPlayerList()
-            if HitboxActive then
-                for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
-                    if otherPlayer ~= Player then
-                        local char = otherPlayer.Character
-                        if char and char ~= Player.Character then
-                            local parts = GetHitboxParts(char)
-                            for _, part in ipairs(parts) do
-                                if not OriginalSizes[part] then
-                                    OriginalSizes[part] = {Size = part.Size / HitboxScale}
-                                    part.Size = part.Size * HitboxScale
-                                end
-                            end
-                        end
-                    end
-                end
-            end
+            if EspActive then UpdateEsp() end
+            if HitboxActive then UpdateHitbox() end
         end
     end
 end)
 
-RefreshPlayerList()
-print("✅ Murder Duels меню загружено!")
-print("🎯 Вкладка АИМ — выбор цели")
-print("📦 Вкладка ХИТБОКСЫ — увеличение хитбоксов")
+-- ===== ОБРАБОТКА РЕСПАВНА =====
+Player.CharacterAdded:Connect(function()
+    task.wait(1)
+    if EspActive then
+        UpdateEsp()
+    end
+    if HitboxActive then
+        UpdateHitbox()
+    end
+end)
+
+print("✅ Murder Duels загружено!")
+print("📦 Вкладка ХИТБОКСЫ")
+print("👁 Вкладка ВИД (ESP)")
