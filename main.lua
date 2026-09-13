@@ -10,7 +10,7 @@ local TweenService = game:GetService("TweenService")
 local CheckInterval = 0.5
 local HitboxHotkey = Enum.KeyCode.H
 local SettingKeybind = false
-local MenuClosed = false
+local MenuClosed = false -- 🔥 отключает все горячие клавиши после закрытия
 
 -- ===== ХИТБОКСЫ =====
 local HitboxScale = 3
@@ -29,6 +29,7 @@ ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
+-- ===== ГЛАВНОЕ ОКНО =====
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 620, 0, 420)
 MainFrame.Position = UDim2.new(0.5, -310, 0.5, -210)
@@ -117,7 +118,7 @@ Author.Parent = TopBar
 local VersionBadge = Instance.new("TextButton")
 VersionBadge.Size = UDim2.new(0, 130, 0, 28)
 VersionBadge.Position = UDim2.new(0.42, 0, 0.2, 0)
-VersionBadge.Text = "Версия 1.0"
+VersionBadge.Text = "Версия 1.1"
 VersionBadge.TextColor3 = Color3.fromRGB(0, 0, 0)
 VersionBadge.TextSize = 12
 VersionBadge.BackgroundColor3 = Color3.fromRGB(80, 255, 100)
@@ -141,13 +142,13 @@ MinimizeBtn.Font = Enum.Font.GothamBold
 MinimizeBtn.ZIndex = 6
 MinimizeBtn.Parent = TopBar
 
--- 🔥 КРЕСТИК исправлен: × + GothamBold
+-- 🔥 КРЕСТИК = X (английская буква)
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 30, 0, 30)
 CloseBtn.Position = UDim2.new(1, -40, 0.15, 0)
-CloseBtn.Text = "×"
+CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.TextSize = 22
+CloseBtn.TextSize = 20
 CloseBtn.BackgroundTransparency = 1
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.ZIndex = 6
@@ -225,6 +226,7 @@ AimPanel.BackgroundTransparency = 1
 AimPanel.ZIndex = 5
 AimPanel.Parent = RightPanel
 
+-- Карточка Хитбоксы
 local HitboxCard = Instance.new("Frame")
 HitboxCard.Size = UDim2.new(0.95, 0, 0, 80)
 HitboxCard.Position = UDim2.new(0.025, 0, 0.1, 0)
@@ -293,6 +295,7 @@ HitboxToggleBtn.Text = ""
 HitboxToggleBtn.ZIndex = 9
 HitboxToggleBtn.Parent = HitboxCard
 
+-- Карточка Размер хитбокса
 local SizeCard = Instance.new("Frame")
 SizeCard.Size = UDim2.new(0.95, 0, 0, 90)
 SizeCard.Position = UDim2.new(0.025, 0, 0.35, 0)
@@ -337,6 +340,7 @@ QuickFrame.BackgroundTransparency = 1
 QuickFrame.ZIndex = 7
 QuickFrame.Parent = SizeCard
 
+-- 🔥 ДОБАВЛЕНА КНОПКА "3"
 local quickValues = {3, 10, 30, 50, 100}
 for i, val in ipairs(quickValues) do
     local qBtn = Instance.new("TextButton")
@@ -366,6 +370,7 @@ for i, val in ipairs(quickValues) do
     end)
 end
 
+-- 🔥 КАРТОЧКА ГОРЯЧЕЙ КЛАВИШИ
 local KeybindCard = Instance.new("Frame")
 KeybindCard.Size = UDim2.new(0.95, 0, 0, 60)
 KeybindCard.Position = UDim2.new(0.025, 0, 0.6, 0)
@@ -670,9 +675,9 @@ local function KeyCodeToString(keyCode)
     return tostring(keyCode):gsub("Enum.KeyCode.", "")
 end
 
-local InputConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
-    if MenuClosed then return end
+    if MenuClosed then return end -- 🔥 после закрытия не работает
     
     if SettingKeybind then
         if input.KeyCode ~= Enum.KeyCode.Unknown then
@@ -691,7 +696,7 @@ local InputConnection = UserInputService.InputBegan:Connect(function(input, game
 end)
 
 -- ===== ГЛАВНЫЙ ЦИКЛ =====
-local LoopThread = task.spawn(function()
+task.spawn(function()
     while ScreenGui.Parent and not MenuClosed do
         task.wait(CheckInterval)
         if EspActive then
@@ -733,15 +738,4 @@ AimTab.MouseButton1Click:Connect(function()
     ResetTabs()
     AimTab.TextColor3 = Color3.fromRGB(255, 255, 255)
     AimTab.BackgroundColor3 = Color3.fromRGB(50, 40, 40)
-    AimTab.BackgroundTransparency = 0.3
-    AimPanel.Visible = true
-    EspPanel.Visible = false
-    PanelTitle.Text = "Аим"
-end)
-
-EspTab.MouseButton1Click:Connect(function()
-    ResetTabs()
-    EspTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-    EspTab.BackgroundColor3 = Color3.fromRGB(50, 40, 40)
-    EspTab.BackgroundTransparency = 0.3
-   
+    AimTab.BackgroundTrans
