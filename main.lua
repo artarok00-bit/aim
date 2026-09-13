@@ -1,4 +1,4 @@
--- [[ Murder Duels — ХИТБОКС ГОЛОВЫ (универсальный) + ESP + HOTKEY ]]
+-- [[ Murder Duels — ХИТБОКС ГОЛОВЫ (через отдельную часть) + ESP + HOTKEY ]]
 -- H — вкл/выкл хитбокс головы
 
 local Player = game.Players.LocalPlayer
@@ -12,7 +12,7 @@ local HitboxHotkey = Enum.KeyCode.H
 -- ===== ХИТБОКС =====
 local HitboxScale = 5
 local HitboxActive = false
-local OriginalSizes = {}
+local HitboxParts = {} -- [char] = part
 
 -- ===== ESP =====
 local EspActive = false
@@ -120,7 +120,7 @@ HitboxPanel.Parent = Content
 local HitboxInfo = Instance.new("TextLabel")
 HitboxInfo.Size = UDim2.new(0.9, 0, 0, 40)
 HitboxInfo.Position = UDim2.new(0.05, 0, 0.05, 0)
-HitboxInfo.Text = "Увеличивает ТОЛЬКО голову врагов\n(всех, кроме себя)"
+HitboxInfo.Text = "Создаёт увеличенный хитбокс\nвокруг головы врагов"
 HitboxInfo.TextColor3 = Color3.fromRGB(180, 180, 210)
 HitboxInfo.TextSize = 12
 HitboxInfo.TextXAlignment = Enum.TextXAlignment.Center
@@ -131,7 +131,7 @@ HitboxInfo.Parent = HitboxPanel
 local HitboxBtn = Instance.new("TextButton")
 HitboxBtn.Size = UDim2.new(0.9, 0, 0, 50)
 HitboxBtn.Position = UDim2.new(0.05, 0, 0.25, 0)
-HitboxBtn.Text = "🎯 ВКЛЮЧИТЬ ХИТБОКС ГОЛОВЫ"
+HitboxBtn.Text = "🎯 ВКЛЮЧИТЬ ХИТБОКС"
 HitboxBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 HitboxBtn.TextSize = 14
 HitboxBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
@@ -167,7 +167,7 @@ HitboxStatus.Parent = HitboxPanel
 local ScaleLabel = Instance.new("TextLabel")
 ScaleLabel.Size = UDim2.new(0.9, 0, 0, 20)
 ScaleLabel.Position = UDim2.new(0.05, 0, 0.62, 0)
-ScaleLabel.Text = "РАЗМЕР ГОЛОВЫ (1-100)"
+ScaleLabel.Text = "РАЗМЕР (1-100)"
 ScaleLabel.TextColor3 = Color3.fromRGB(180, 180, 210)
 ScaleLabel.TextSize = 11
 ScaleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -241,17 +241,6 @@ ViewPanel.BackgroundTransparency = 1
 ViewPanel.Visible = false
 ViewPanel.Parent = Content
 
-local EspInfo = Instance.new("TextLabel")
-EspInfo.Size = UDim2.new(0.9, 0, 0, 40)
-EspInfo.Position = UDim2.new(0.05, 0, 0.05, 0)
-EspInfo.Text = "ESP — красная обводка вокруг\nвсех врагов на сервере"
-EspInfo.TextColor3 = Color3.fromRGB(180, 180, 210)
-EspInfo.TextSize = 12
-EspInfo.TextXAlignment = Enum.TextXAlignment.Center
-EspInfo.BackgroundTransparency = 1
-EspInfo.Font = Enum.Font.Gotham
-EspInfo.Parent = ViewPanel
-
 local EspBtn = Instance.new("TextButton")
 EspBtn.Size = UDim2.new(0.9, 0, 0, 50)
 EspBtn.Position = UDim2.new(0.05, 0, 0.25, 0)
@@ -277,141 +266,88 @@ EspStatus.BackgroundTransparency = 1
 EspStatus.Font = Enum.Font.Gotham
 EspStatus.Parent = ViewPanel
 
-local EspColorLabel = Instance.new("TextLabel")
-EspColorLabel.Size = UDim2.new(0.9, 0, 0, 20)
-EspColorLabel.Position = UDim2.new(0.05, 0, 0.62, 0)
-EspColorLabel.Text = "ЦВЕТ ОБВОДКИ"
-EspColorLabel.TextColor3 = Color3.fromRGB(180, 180, 210)
-EspColorLabel.TextSize = 11
-EspColorLabel.TextXAlignment = Enum.TextXAlignment.Left
-EspColorLabel.BackgroundTransparency = 1
-EspColorLabel.Font = Enum.Font.Gotham
-EspColorLabel.Parent = ViewPanel
-
-local ColorsFrame = Instance.new("Frame")
-ColorsFrame.Size = UDim2.new(0.9, 0, 0, 40)
-ColorsFrame.Position = UDim2.new(0.05, 0, 0.7, 0)
-ColorsFrame.BackgroundTransparency = 1
-ColorsFrame.Parent = ViewPanel
-
-local colors = {
-    {color = Color3.fromRGB(255, 0, 0)},
-    {color = Color3.fromRGB(0, 255, 0)},
-    {color = Color3.fromRGB(0, 150, 255)},
-    {color = Color3.fromRGB(180, 0, 255)}
-}
-
-for i, c in ipairs(colors) do
-    local colorBtn = Instance.new("TextButton")
-    colorBtn.Size = UDim2.new(0.22, 0, 1, 0)
-    colorBtn.Position = UDim2.new((i-1) * 0.26, 0, 0, 0)
-    colorBtn.Text = ""
-    colorBtn.BackgroundColor3 = c.color
-    colorBtn.BorderSizePixel = 0
-    colorBtn.Parent = ColorsFrame
-    local colorCorner = Instance.new("UICorner")
-    colorCorner.CornerRadius = UDim.new(0, 6)
-    colorCorner.Parent = colorBtn
-    
-    colorBtn.MouseButton1Click:Connect(function()
-        EspColor = c.color
-        for _, highlight in pairs(EspHighlights) do
-            if highlight and highlight.Parent then
-                highlight.FillColor = EspColor
-                highlight.OutlineColor = EspColor
-            end
-        end
-    end)
-end
-
 -- ===== УНИВЕРСАЛЬНЫЙ ПОИСК ГОЛОВЫ =====
-local function GetHeadParts(char)
-    local heads = {}
-    local added = {} -- чтобы не добавлять одно и то же
-
-    -- 1. Стандартная голова
+local function GetHeadPosition(char)
+    -- Ищем голову (стандартную или кастомную)
     local head = char:FindFirstChild("Head")
     if head and head:IsA("BasePart") then
-        table.insert(heads, head)
-        added[head] = true
+        return head.Position
     end
-
-    -- 2. Все части с "head" в имени
+    
+    -- Если нет стандартной головы — ищем все части с "head" в имени
     for _, part in ipairs(char:GetDescendants()) do
-        if part:IsA("BasePart") and not added[part] then
-            local n = string.lower(part.Name)
-            if string.find(n, "head") then
-                table.insert(heads, part)
-                added[part] = true
-            end
+        if part:IsA("BasePart") and string.find(string.lower(part.Name), "head") then
+            return part.Position
         end
     end
-
-    -- 3. Все аксессуары на голове (Hat, Hair, Accessory)
-    for _, obj in ipairs(char:GetChildren()) do
-        if obj:IsA("Accessory") or string.find(string.lower(obj.Name), "hat") or string.find(string.lower(obj.Name), "hair") then
-            for _, part in ipairs(obj:GetDescendants()) do
-                if part:IsA("BasePart") and not added[part] then
-                    table.insert(heads, part)
-                    added[part] = true
-                end
-            end
-        end
+    
+    -- Если нет — берём позицию по Y выше HumanoidRootPart
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if root then
+        return root.Position + Vector3.new(0, 1.5, 0)
     end
-
-    -- 4. Если ничего не нашли — берём части выше HumanoidRootPart
-    if #heads == 0 then
-        local root = char:FindFirstChild("HumanoidRootPart")
-        if root then
-            for _, part in ipairs(char:GetChildren()) do
-                if part:IsA("BasePart") and part.Position.Y > root.Position.Y + 0.5 then
-                    table.insert(heads, part)
-                end
-            end
-        end
-    end
-
-    -- 5. Если всё ещё пусто — берём ВСЕ BasePart выше 2 студов от корня
-    if #heads == 0 then
-        local root = char:FindFirstChild("HumanoidRootPart")
-        if root then
-            for _, part in ipairs(char:GetDescendants()) do
-                if part:IsA("BasePart") and (part.Position.Y - root.Position.Y) > 2 then
-                    table.insert(heads, part)
-                end
-            end
-        end
-    end
-
-    return heads
+    
+    return nil
 end
 
--- ===== ХИТБОКС ГОЛОВЫ =====
+-- ===== СОЗДАНИЕ НЕВИДИМОГО ХИТБОКСА =====
+local function CreateHitbox(char)
+    local pos = GetHeadPosition(char)
+    if not pos then return nil end
+    
+    local hitbox = Instance.new("Part")
+    hitbox.Name = "MurderHitbox"
+    hitbox.Size = Vector3.new(2, 2, 2) * HitboxScale
+    hitbox.Position = pos
+    hitbox.Anchored = true
+    hitbox.CanCollide = false
+    hitbox.Transparency = 0.5 -- полупрозрачный, чтобы видеть
+    hitbox.Color = Color3.fromRGB(255, 0, 0)
+    hitbox.Material = Enum.Material.Neon
+    hitbox.Parent = char
+    
+    return hitbox
+end
+
 local function ApplyHitboxToPlayer(otherPlayer)
     if otherPlayer == Player then return end
     local char = otherPlayer.Character
     if not char or char == Player.Character then return end
     
-    local heads = GetHeadParts(char)
-    for _, head in ipairs(heads) do
-        if not OriginalSizes[head] then
-            OriginalSizes[head] = {Size = head.Size}
-            head.Size = head.Size * HitboxScale
+    -- Если уже есть хитбокс — не создаём
+    local existing = char:FindFirstChild("MurderHitbox")
+    if existing then
+        -- Обновляем позицию и размер
+        local pos = GetHeadPosition(char)
+        if pos then
+            existing.Position = pos
+            existing.Size = Vector3.new(2, 2, 2) * HitboxScale
         end
+        return
+    end
+    
+    local hitbox = CreateHitbox(char)
+    if hitbox then
+        HitboxParts[char] = hitbox
     end
 end
 
--- Также применяем ко всем NPC (не игрокам)
 local function ApplyHitboxToNPCs()
     for _, obj in ipairs(workspace:GetChildren()) do
         if obj:IsA("Model") and not game.Players:GetPlayerFromCharacter(obj) then
             local humanoid = obj:FindFirstChildOfClass("Humanoid")
             if humanoid then
-                local heads = GetHeadParts(obj)
-                for _, head in ipairs(heads) do
-                    if not OriginalSizes[head] then
-                        OriginalSizes[head] = {Size = head.Size}
-                        head.Size = head.Size * HitboxScale
+                local existing = obj:FindFirstChild("MurderHitbox")
+                if existing then
+                    local pos = GetHeadPosition(obj)
+                    if pos then
+                        existing.Position = pos
+                        existing.Size = Vector3.new(2, 2, 2) * HitboxScale
+                    end
+                else
+                    local hitbox = CreateHitbox(obj)
+                    if hitbox then
+                        HitboxParts[obj] = hitbox
                     end
                 end
             end
@@ -421,14 +357,14 @@ end
 
 function EnableHitbox()
     HitboxActive = true
-    OriginalSizes = {}
+    HitboxParts = {}
     
     for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
         ApplyHitboxToPlayer(otherPlayer)
     end
     ApplyHitboxToNPCs()
     
-    HitboxBtn.Text = "🎯 ВЫКЛЮЧИТЬ ХИТБОКС ГОЛОВЫ"
+    HitboxBtn.Text = "🎯 ВЫКЛЮЧИТЬ ХИТБОКС"
     HitboxBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
     HitboxStatus.Text = "● ВКЛЮЧЕНО (x" .. HitboxScale .. ")"
     HitboxStatus.TextColor3 = Color3.fromRGB(100, 200, 100)
@@ -437,14 +373,28 @@ end
 function DisableHitbox()
     HitboxActive = false
     
-    for part, data in pairs(OriginalSizes) do
-        if part and part.Parent then
-            part.Size = data.Size
+    for _, hitbox in pairs(HitboxParts) do
+        if hitbox and hitbox.Parent then
+            hitbox:Destroy()
         end
     end
-    OriginalSizes = {}
+    HitboxParts = {}
     
-    HitboxBtn.Text = "🎯 ВКЛЮЧИТЬ ХИТБОКС ГОЛОВЫ"
+    -- Чистим все оставшиеся
+    for _, p in ipairs(game.Players:GetPlayers()) do
+        if p.Character then
+            local h = p.Character:FindFirstChild("MurderHitbox")
+            if h then h:Destroy() end
+        end
+    end
+    for _, obj in ipairs(workspace:GetChildren()) do
+        if obj:IsA("Model") then
+            local h = obj:FindFirstChild("MurderHitbox")
+            if h then h:Destroy() end
+        end
+    end
+    
+    HitboxBtn.Text = "🎯 ВКЛЮЧИТЬ ХИТБОКС"
     HitboxBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
     HitboxStatus.Text = "● ВЫКЛЮЧЕНО"
     HitboxStatus.TextColor3 = Color3.fromRGB(200, 80, 80)
@@ -472,25 +422,11 @@ local function ApplyEspToPlayer(otherPlayer)
     if otherPlayer == Player then return end
     local char = otherPlayer.Character
     if not char or char == Player.Character then return end
+    if char:FindFirstChild("MurderESP") then return end
     
-    local humanoid = char:FindFirstChild("Humanoid")
-    if not humanoid or humanoid.Health <= 0 then return end
-    
-    if not char:FindFirstChild("MurderESP") then
-        local highlight = CreateHighlight(char)
-        if highlight then
-            EspHighlights[otherPlayer] = highlight
-        end
-    end
-end
-
-local function ApplyEspToNPCs()
-    for _, obj in ipairs(workspace:GetChildren()) do
-        if obj:IsA("Model") and not game.Players:GetPlayerFromCharacter(obj) then
-            if obj:FindFirstChildOfClass("Humanoid") and not obj:FindFirstChild("MurderESP") then
-                CreateHighlight(obj)
-            end
-        end
+    local highlight = CreateHighlight(char)
+    if highlight then
+        EspHighlights[otherPlayer] = highlight
     end
 end
 
@@ -501,7 +437,6 @@ function EnableEsp()
     for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
         ApplyEspToPlayer(otherPlayer)
     end
-    ApplyEspToNPCs()
     
     EspBtn.Text = "👁 ВЫКЛЮЧИТЬ ESP"
     EspBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
@@ -522,12 +457,6 @@ function DisableEsp()
     for _, p in ipairs(game.Players:GetPlayers()) do
         if p.Character then
             local h = p.Character:FindFirstChild("MurderESP")
-            if h then h:Destroy() end
-        end
-    end
-    for _, obj in ipairs(workspace:GetChildren()) do
-        if obj:IsA("Model") then
-            local h = obj:FindFirstChild("MurderESP")
             if h then h:Destroy() end
         end
     end
@@ -557,7 +486,6 @@ task.spawn(function()
         
         if EspActive then
             for _, p in ipairs(game.Players:GetPlayers()) do ApplyEspToPlayer(p) end
-            ApplyEspToNPCs()
         end
         
         if HitboxActive then
@@ -622,4 +550,4 @@ CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
-print("✅ Murder Duels загружено! Универсальный хитбокс головы + NPC. H — вкл/выкл")
+print("✅ Murder Duels загружено! Хитбокс через отдельную часть. H — вкл/выкл")
