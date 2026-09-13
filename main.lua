@@ -1,6 +1,5 @@
--- [[ Murder Duels — THUNDERHUB STYLE UI ]]
--- H — вкл/выкл хитбоксы
--- Интерфейс в стиле ThunderHub MM2
+-- [[ ARTARIO HUB — Murder Duels ]]
+-- Разработчик: artar
 
 local Player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -23,7 +22,7 @@ local EspHighlights = {}
 
 -- ===== GUI =====
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "MurderDuelsMenu"
+ScreenGui.Name = "ArtarioHub"
 ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -44,12 +43,11 @@ local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 14)
 MainCorner.Parent = MainFrame
 
--- Фон (картинка)
+-- Фон
 local BackgroundImage = Instance.new("ImageLabel")
 BackgroundImage.Size = UDim2.new(1, 0, 1, 0)
-BackgroundImage.Position = UDim2.new(0, 0, 0, 0)
 BackgroundImage.BackgroundTransparency = 1
-BackgroundImage.Image = "rbxassetid://133445291771070" -- затемнённый фон с девушкой
+BackgroundImage.Image = "rbxassetid://133445291771070"
 BackgroundImage.ScaleType = Enum.ScaleType.Crop
 BackgroundImage.ZIndex = 0
 BackgroundImage.Parent = MainFrame
@@ -97,7 +95,7 @@ LogoCorner.Parent = Logo
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(0.4, 0, 0, 20)
 Title.Position = UDim2.new(0.09, 0, 0.1, 0)
-Title.Text = "THUNDERHUB MM2 🔥"
+Title.Text = "ARTARIO HUB 🔥"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 14
 Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -110,7 +108,7 @@ Title.Parent = TopBar
 local Author = Instance.new("TextLabel")
 Author.Size = UDim2.new(0.4, 0, 0, 16)
 Author.Position = UDim2.new(0.09, 0, 0.55, 0)
-Author.Text = "by CaJfin & Zepr"
+Author.Text = "by artar"
 Author.TextColor3 = Color3.fromRGB(180, 180, 180)
 Author.TextSize = 11
 Author.TextXAlignment = Enum.TextXAlignment.Left
@@ -123,7 +121,7 @@ Author.Parent = TopBar
 local VersionBadge = Instance.new("TextButton")
 VersionBadge.Size = UDim2.new(0, 130, 0, 28)
 VersionBadge.Position = UDim2.new(0.42, 0, 0.2, 0)
-VersionBadge.Text = "Версия 7.8.2 alpha"
+VersionBadge.Text = "Версия 1.0"
 VersionBadge.TextColor3 = Color3.fromRGB(0, 0, 0)
 VersionBadge.TextSize = 12
 VersionBadge.BackgroundColor3 = Color3.fromRGB(80, 255, 100)
@@ -136,7 +134,7 @@ local VersionCorner = Instance.new("UICorner")
 VersionCorner.CornerRadius = UDim.new(0, 14)
 VersionCorner.Parent = VersionBadge
 
--- Кнопки управления (свернуть/закрыть)
+-- Кнопки управления
 local MinimizeBtn = Instance.new("TextButton")
 MinimizeBtn.Size = UDim2.new(0, 30, 0, 30)
 MinimizeBtn.Position = UDim2.new(1, -75, 0.15, 0)
@@ -159,7 +157,7 @@ CloseBtn.Font = Enum.Font.Gotham
 CloseBtn.ZIndex = 6
 CloseBtn.Parent = TopBar
 
--- ===== ЛЕВОЕ МЕНЮ =====
+-- ===== ЛЕВОЕ МЕНЮ (только 2 вкладки) =====
 local Sidebar = Instance.new("Frame")
 Sidebar.Size = UDim2.new(0, 150, 1, -50)
 Sidebar.Position = UDim2.new(0, 5, 0, 48)
@@ -176,7 +174,7 @@ SidebarCorner.Parent = Sidebar
 -- Поиск
 local SearchBox = Instance.new("TextBox")
 SearchBox.Size = UDim2.new(0.9, 0, 0, 30)
-SearchBox.Position = UDim2.new(0.05, 0, 0.02, 0)
+SearchBox.Position = UDim2.new(0.05, 0, 0.03, 0)
 SearchBox.Text = ""
 SearchBox.PlaceholderText = "🔍 Search"
 SearchBox.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -193,29 +191,38 @@ local SearchCorner = Instance.new("UICorner")
 SearchCorner.CornerRadius = UDim.new(0, 8)
 SearchCorner.Parent = SearchBox
 
--- Кнопки вкладок
-local function CreateSidebarButton(name, icon, y)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.9, 0, 0, 32)
-    btn.Position = UDim2.new(0.05, 0, 0, y)
-    btn.Text = "  " .. icon .. "  " .. name
-    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    btn.TextSize = 12
-    btn.BackgroundTransparency = 1
-    btn.Font = Enum.Font.Gotham
-    btn.TextXAlignment = Enum.TextXAlignment.Left
-    btn.ZIndex = 6
-    btn.Parent = Sidebar
-    return btn
-end
+-- Вкладка "АИМ"
+local AimTab = Instance.new("TextButton")
+AimTab.Size = UDim2.new(0.9, 0, 0, 32)
+AimTab.Position = UDim2.new(0.05, 0, 0, 50)
+AimTab.Text = "  🎯  Аим"
+AimTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+AimTab.TextSize = 12
+AimTab.BackgroundColor3 = Color3.fromRGB(50, 40, 40)
+AimTab.BackgroundTransparency = 0.3
+AimTab.BorderSizePixel = 0
+AimTab.Font = Enum.Font.GothamSemibold
+AimTab.TextXAlignment = Enum.TextXAlignment.Left
+AimTab.ZIndex = 6
+AimTab.Parent = Sidebar
 
-local TabChar = CreateSidebarButton("Персонаж", "👤", 50)
-local TabTeleport = CreateSidebarButton("Телепорт", "🌀", 85)
-local TabCombat = CreateSidebarButton("Комбат", "⚔️", 120)
-local TabTrolling = CreateSidebarButton("Троллинг", "😈", 155)
-local TabWallhack = CreateSidebarButton("Валлхак", "🧱", 190)
-local TabVisual = CreateSidebarButton("Визуал", "👁", 225)
-local TabButtons = CreateSidebarButton("Кнопки", "🎮", 260)
+local AimCorner = Instance.new("UICorner")
+AimCorner.CornerRadius = UDim.new(0, 6)
+AimCorner.Parent = AimTab
+
+-- Вкладка "ЕСП"
+local EspTab = Instance.new("TextButton")
+EspTab.Size = UDim2.new(0.9, 0, 0, 32)
+EspTab.Position = UDim2.new(0.05, 0, 0, 88)
+EspTab.Text = "  👁  ЕСП"
+EspTab.TextColor3 = Color3.fromRGB(200, 200, 200)
+EspTab.TextSize = 12
+EspTab.BackgroundTransparency = 1
+EspTab.BorderSizePixel = 0
+EspTab.Font = Enum.Font.GothamSemibold
+EspTab.TextXAlignment = Enum.TextXAlignment.Left
+EspTab.ZIndex = 6
+EspTab.Parent = Sidebar
 
 -- ===== ПРАВАЯ ПАНЕЛЬ =====
 local RightPanel = Instance.new("Frame")
@@ -225,11 +232,11 @@ RightPanel.BackgroundTransparency = 1
 RightPanel.ZIndex = 5
 RightPanel.Parent = MainFrame
 
--- Заголовок панели
+-- Заголовок
 local PanelTitle = Instance.new("TextLabel")
 PanelTitle.Size = UDim2.new(0.9, 0, 0, 25)
 PanelTitle.Position = UDim2.new(0.05, 0, 0.02, 0)
-PanelTitle.Text = "Визуал"
+PanelTitle.Text = "Аим"
 PanelTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 PanelTitle.TextSize = 15
 PanelTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -238,85 +245,22 @@ PanelTitle.Font = Enum.Font.GothamBold
 PanelTitle.ZIndex = 6
 PanelTitle.Parent = RightPanel
 
--- ===== КАРТОЧКА ESP =====
-local EspCard = Instance.new("Frame")
-EspCard.Size = UDim2.new(0.95, 0, 0, 80)
-EspCard.Position = UDim2.new(0.025, 0, 0.1, 0)
-EspCard.BackgroundColor3 = Color3.fromRGB(35, 28, 28)
-EspCard.BackgroundTransparency = 0.15
-EspCard.BorderSizePixel = 0
-EspCard.ZIndex = 6
-EspCard.Parent = RightPanel
+-- ===== ВКЛАДКА АИМ =====
+local AimPanel = Instance.new("Frame")
+AimPanel.Size = UDim2.new(1, 0, 1, 0)
+AimPanel.BackgroundTransparency = 1
+AimPanel.ZIndex = 5
+AimPanel.Parent = RightPanel
 
-local EspCardCorner = Instance.new("UICorner")
-EspCardCorner.CornerRadius = UDim.new(0, 12)
-EspCardCorner.Parent = EspCard
-
-local EspCardTitle = Instance.new("TextLabel")
-EspCardTitle.Size = UDim2.new(0.7, 0, 0, 20)
-EspCardTitle.Position = UDim2.new(0.05, 0, 0.1, 0)
-EspCardTitle.Text = "Показать ESP"
-EspCardTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-EspCardTitle.TextSize = 13
-EspCardTitle.TextXAlignment = Enum.TextXAlignment.Left
-EspCardTitle.BackgroundTransparency = 1
-EspCardTitle.Font = Enum.Font.GothamSemibold
-EspCardTitle.ZIndex = 7
-EspCardTitle.Parent = EspCard
-
-local EspCardDesc = Instance.new("TextLabel")
-EspCardDesc.Size = UDim2.new(0.7, 0, 0, 18)
-EspCardDesc.Position = UDim2.new(0.05, 0, 0.38, 0)
-EspCardDesc.Text = "Обводка врагов через стены"
-EspCardDesc.TextColor3 = Color3.fromRGB(180, 180, 180)
-EspCardDesc.TextSize = 11
-EspCardDesc.TextXAlignment = Enum.TextXAlignment.Left
-EspCardDesc.BackgroundTransparency = 1
-EspCardDesc.Font = Enum.Font.Gotham
-EspCardDesc.ZIndex = 7
-EspCardDesc.Parent = EspCard
-
-local EspToggleBg = Instance.new("Frame")
-EspToggleBg.Size = UDim2.new(0, 45, 0, 24)
-EspToggleBg.Position = UDim2.new(1, -55, 0.5, -12)
-EspToggleBg.BackgroundColor3 = Color3.fromRGB(60, 55, 55)
-EspToggleBg.BorderSizePixel = 0
-EspToggleBg.ZIndex = 7
-EspToggleBg.Parent = EspCard
-
-local EspToggleBgCorner = Instance.new("UICorner")
-EspToggleBgCorner.CornerRadius = UDim.new(1, 0)
-EspToggleBgCorner.Parent = EspToggleBg
-
-local EspToggleKnob = Instance.new("Frame")
-EspToggleKnob.Size = UDim2.new(0, 18, 0, 18)
-EspToggleKnob.Position = UDim2.new(0, 3, 0.5, -9)
-EspToggleKnob.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
-EspToggleKnob.BorderSizePixel = 0
-EspToggleKnob.ZIndex = 8
-EspToggleKnob.Parent = EspToggleBg
-
-local EspToggleKnobCorner = Instance.new("UICorner")
-EspToggleKnobCorner.CornerRadius = UDim.new(1, 0)
-EspToggleKnobCorner.Parent = EspToggleKnob
-
--- Кнопка ESP (для нажатия)
-local EspToggleBtn = Instance.new("TextButton")
-EspToggleBtn.Size = UDim2.new(1, 0, 1, 0)
-EspToggleBtn.BackgroundTransparency = 1
-EspToggleBtn.Text = ""
-EspToggleBtn.ZIndex = 9
-EspToggleBtn.Parent = EspCard
-
--- ===== КАРТОЧКА ХИТБОКСА =====
+-- Карточка Хитбоксы
 local HitboxCard = Instance.new("Frame")
 HitboxCard.Size = UDim2.new(0.95, 0, 0, 80)
-HitboxCard.Position = UDim2.new(0.025, 0, 0.35, 0)
+HitboxCard.Position = UDim2.new(0.025, 0, 0.1, 0)
 HitboxCard.BackgroundColor3 = Color3.fromRGB(35, 28, 28)
 HitboxCard.BackgroundTransparency = 0.15
 HitboxCard.BorderSizePixel = 0
 HitboxCard.ZIndex = 6
-HitboxCard.Parent = RightPanel
+HitboxCard.Parent = AimPanel
 
 local HitboxCardCorner = Instance.new("UICorner")
 HitboxCardCorner.CornerRadius = UDim.new(0, 12)
@@ -325,7 +269,7 @@ HitboxCardCorner.Parent = HitboxCard
 local HitboxCardTitle = Instance.new("TextLabel")
 HitboxCardTitle.Size = UDim2.new(0.7, 0, 0, 20)
 HitboxCardTitle.Position = UDim2.new(0.05, 0, 0.1, 0)
-HitboxCardTitle.Text = "Увеличить хитбоксы"
+HitboxCardTitle.Text = "Включить хитбоксы"
 HitboxCardTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 HitboxCardTitle.TextSize = 13
 HitboxCardTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -377,15 +321,15 @@ HitboxToggleBtn.Text = ""
 HitboxToggleBtn.ZIndex = 9
 HitboxToggleBtn.Parent = HitboxCard
 
--- ===== КАРТОЧКА РАЗМЕРА ХИТБОКСА =====
+-- Карточка Размер хитбокса
 local SizeCard = Instance.new("Frame")
-SizeCard.Size = UDim2.new(0.95, 0, 0, 55)
-SizeCard.Position = UDim2.new(0.025, 0, 0.6, 0)
+SizeCard.Size = UDim2.new(0.95, 0, 0, 90)
+SizeCard.Position = UDim2.new(0.025, 0, 0.35, 0)
 SizeCard.BackgroundColor3 = Color3.fromRGB(35, 28, 28)
 SizeCard.BackgroundTransparency = 0.15
 SizeCard.BorderSizePixel = 0
 SizeCard.ZIndex = 6
-SizeCard.Parent = RightPanel
+SizeCard.Parent = AimPanel
 
 local SizeCardCorner = Instance.new("UICorner")
 SizeCardCorner.CornerRadius = UDim.new(0, 12)
@@ -393,33 +337,207 @@ SizeCardCorner.Parent = SizeCard
 
 local SizeTitle = Instance.new("TextLabel")
 SizeTitle.Size = UDim2.new(0.5, 0, 0, 20)
-SizeTitle.Position = UDim2.new(0.05, 0, 0.15, 0)
+SizeTitle.Position = UDim2.new(0.05, 0, 0.1, 0)
 SizeTitle.Text = "Размер хитбокса"
 SizeTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-SizeTitle.TextSize = 12
+SizeTitle.TextSize = 13
 SizeTitle.TextXAlignment = Enum.TextXAlignment.Left
 SizeTitle.BackgroundTransparency = 1
 SizeTitle.Font = Enum.Font.GothamSemibold
 SizeTitle.ZIndex = 7
 SizeTitle.Parent = SizeCard
 
-local SizeInput = Instance.new("TextBox")
-SizeInput.Size = UDim2.new(0.2, 0, 0, 28)
-SizeInput.Position = UDim2.new(0.75, 0, 0.5, -14)
-SizeInput.Text = "3"
-SizeInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-SizeInput.TextSize = 13
-SizeInput.BackgroundColor3 = Color3.fromRGB(50, 42, 42)
-SizeInput.BackgroundTransparency = 0.2
-SizeInput.BorderSizePixel = 0
-SizeInput.Font = Enum.Font.GothamBold
-SizeInput.TextXAlignment = Enum.TextXAlignment.Center
-SizeInput.ZIndex = 7
-SizeInput.Parent = SizeCard
+local SizeValue = Instance.new("TextLabel")
+SizeValue.Size = UDim2.new(0.2, 0, 0, 20)
+SizeValue.Position = UDim2.new(0.75, 0, 0.1, 0)
+SizeValue.Text = "3"
+SizeValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+SizeValue.TextSize = 13
+SizeValue.TextXAlignment = Enum.TextXAlignment.Right
+SizeValue.BackgroundTransparency = 1
+SizeValue.Font = Enum.Font.GothamBold
+SizeValue.ZIndex = 7
+SizeValue.Parent = SizeCard
 
-local SizeInputCorner = Instance.new("UICorner")
-SizeInputCorner.CornerRadius = UDim.new(0, 6)
-SizeInputCorner.Parent = SizeInput
+-- Быстрые кнопки размера
+local QuickFrame = Instance.new("Frame")
+QuickFrame.Size = UDim2.new(0.9, 0, 0, 32)
+QuickFrame.Position = UDim2.new(0.05, 0, 0.5, 0)
+QuickFrame.BackgroundTransparency = 1
+QuickFrame.ZIndex = 7
+QuickFrame.Parent = SizeCard
+
+local quickValues = {10, 30, 50, 100}
+for i, val in ipairs(quickValues) do
+    local qBtn = Instance.new("TextButton")
+    qBtn.Size = UDim2.new(0.22, 0, 1, 0)
+    qBtn.Position = UDim2.new((i-1) * 0.26, 0, 0, 0)
+    qBtn.Text = tostring(val)
+    qBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    qBtn.TextSize = 12
+    qBtn.BackgroundColor3 = Color3.fromRGB(50, 42, 42)
+    qBtn.BackgroundTransparency = 0.2
+    qBtn.BorderSizePixel = 0
+    qBtn.Font = Enum.Font.GothamBold
+    qBtn.ZIndex = 8
+    qBtn.Parent = QuickFrame
+    
+    local qCorner = Instance.new("UICorner")
+    qCorner.CornerRadius = UDim.new(0, 6)
+    qCorner.Parent = qBtn
+    
+    qBtn.MouseButton1Click:Connect(function()
+        HitboxScale = val
+        SizeValue.Text = tostring(val)
+        if HitboxActive then
+            DisableHitbox()
+            EnableHitbox()
+        end
+    end)
+end
+
+-- ===== ВКЛАДКА ЕСП =====
+local EspPanel = Instance.new("Frame")
+EspPanel.Size = UDim2.new(1, 0, 1, 0)
+EspPanel.BackgroundTransparency = 1
+EspPanel.Visible = false
+EspPanel.ZIndex = 5
+EspPanel.Parent = RightPanel
+
+-- Карточка ESP
+local EspCard = Instance.new("Frame")
+EspCard.Size = UDim2.new(0.95, 0, 0, 80)
+EspCard.Position = UDim2.new(0.025, 0, 0.1, 0)
+EspCard.BackgroundColor3 = Color3.fromRGB(35, 28, 28)
+EspCard.BackgroundTransparency = 0.15
+EspCard.BorderSizePixel = 0
+EspCard.ZIndex = 6
+EspCard.Parent = EspPanel
+
+local EspCardCorner = Instance.new("UICorner")
+EspCardCorner.CornerRadius = UDim.new(0, 12)
+EspCardCorner.Parent = EspCard
+
+local EspCardTitle = Instance.new("TextLabel")
+EspCardTitle.Size = UDim2.new(0.7, 0, 0, 20)
+EspCardTitle.Position = UDim2.new(0.05, 0, 0.1, 0)
+EspCardTitle.Text = "Включить ESP"
+EspCardTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+EspCardTitle.TextSize = 13
+EspCardTitle.TextXAlignment = Enum.TextXAlignment.Left
+EspCardTitle.BackgroundTransparency = 1
+EspCardTitle.Font = Enum.Font.GothamSemibold
+EspCardTitle.ZIndex = 7
+EspCardTitle.Parent = EspCard
+
+local EspCardDesc = Instance.new("TextLabel")
+EspCardDesc.Size = UDim2.new(0.7, 0, 0, 18)
+EspCardDesc.Position = UDim2.new(0.05, 0, 0.38, 0)
+EspCardDesc.Text = "Обводка врагов через стены"
+EspCardDesc.TextColor3 = Color3.fromRGB(180, 180, 180)
+EspCardDesc.TextSize = 11
+EspCardDesc.TextXAlignment = Enum.TextXAlignment.Left
+EspCardDesc.BackgroundTransparency = 1
+EspCardDesc.Font = Enum.Font.Gotham
+EspCardDesc.ZIndex = 7
+EspCardDesc.Parent = EspCard
+
+local EspToggleBg = Instance.new("Frame")
+EspToggleBg.Size = UDim2.new(0, 45, 0, 24)
+EspToggleBg.Position = UDim2.new(1, -55, 0.5, -12)
+EspToggleBg.BackgroundColor3 = Color3.fromRGB(60, 55, 55)
+EspToggleBg.BorderSizePixel = 0
+EspToggleBg.ZIndex = 7
+EspToggleBg.Parent = EspCard
+
+local EspToggleBgCorner = Instance.new("UICorner")
+EspToggleBgCorner.CornerRadius = UDim.new(1, 0)
+EspToggleBgCorner.Parent = EspToggleBg
+
+local EspToggleKnob = Instance.new("Frame")
+EspToggleKnob.Size = UDim2.new(0, 18, 0, 18)
+EspToggleKnob.Position = UDim2.new(0, 3, 0.5, -9)
+EspToggleKnob.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
+EspToggleKnob.BorderSizePixel = 0
+EspToggleKnob.ZIndex = 8
+EspToggleKnob.Parent = EspToggleBg
+
+local EspToggleKnobCorner = Instance.new("UICorner")
+EspToggleKnobCorner.CornerRadius = UDim.new(1, 0)
+EspToggleKnobCorner.Parent = EspToggleKnob
+
+local EspToggleBtn = Instance.new("TextButton")
+EspToggleBtn.Size = UDim2.new(1, 0, 1, 0)
+EspToggleBtn.BackgroundTransparency = 1
+EspToggleBtn.Text = ""
+EspToggleBtn.ZIndex = 9
+EspToggleBtn.Parent = EspCard
+
+-- Карточка Цвет ESP
+local EspColorCard = Instance.new("Frame")
+EspColorCard.Size = UDim2.new(0.95, 0, 0, 80)
+EspColorCard.Position = UDim2.new(0.025, 0, 0.35, 0)
+EspColorCard.BackgroundColor3 = Color3.fromRGB(35, 28, 28)
+EspColorCard.BackgroundTransparency = 0.15
+EspColorCard.BorderSizePixel = 0
+EspColorCard.ZIndex = 6
+EspColorCard.Parent = EspPanel
+
+local EspColorCardCorner = Instance.new("UICorner")
+EspColorCardCorner.CornerRadius = UDim.new(0, 12)
+EspColorCardCorner.Parent = EspColorCard
+
+local EspColorTitle = Instance.new("TextLabel")
+EspColorTitle.Size = UDim2.new(0.5, 0, 0, 20)
+EspColorTitle.Position = UDim2.new(0.05, 0, 0.1, 0)
+EspColorTitle.Text = "Цвет обводки"
+EspColorTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+EspColorTitle.TextSize = 13
+EspColorTitle.TextXAlignment = Enum.TextXAlignment.Left
+EspColorTitle.BackgroundTransparency = 1
+EspColorTitle.Font = Enum.Font.GothamSemibold
+EspColorTitle.ZIndex = 7
+EspColorTitle.Parent = EspColorCard
+
+-- 4 цвета: зелёный, синий, фиолетовый, красный
+local ColorsFrame = Instance.new("Frame")
+ColorsFrame.Size = UDim2.new(0.9, 0, 0, 32)
+ColorsFrame.Position = UDim2.new(0.05, 0, 0.45, 0)
+ColorsFrame.BackgroundTransparency = 1
+ColorsFrame.ZIndex = 7
+ColorsFrame.Parent = EspColorCard
+
+local espColors = {
+    {color = Color3.fromRGB(0, 255, 0), name = "Зелёный"},
+    {color = Color3.fromRGB(0, 150, 255), name = "Синий"},
+    {color = Color3.fromRGB(180, 0, 255), name = "Фиолетовый"},
+    {color = Color3.fromRGB(255, 0, 0), name = "Красный"}
+}
+
+for i, c in ipairs(espColors) do
+    local colorBtn = Instance.new("TextButton")
+    colorBtn.Size = UDim2.new(0.22, 0, 1, 0)
+    colorBtn.Position = UDim2.new((i-1) * 0.26, 0, 0, 0)
+    colorBtn.Text = ""
+    colorBtn.BackgroundColor3 = c.color
+    colorBtn.BorderSizePixel = 0
+    colorBtn.ZIndex = 8
+    colorBtn.Parent = ColorsFrame
+    
+    local colorCorner = Instance.new("UICorner")
+    colorCorner.CornerRadius = UDim.new(0, 6)
+    colorCorner.Parent = colorBtn
+    
+    colorBtn.MouseButton1Click:Connect(function()
+        EspColor = c.color
+        for _, h in pairs(EspHighlights) do
+            if h and h.Parent then
+                h.FillColor = EspColor
+                h.OutlineColor = EspColor
+            end
+        end
+    end)
+end
 
 -- ===== ФУНКЦИИ =====
 local function UpdateToggle(toggleBg, toggleKnob, enabled)
@@ -481,11 +599,11 @@ end
 -- ===== ESP =====
 local function CreateHighlight(char)
     if not char then return nil end
-    local old = char:FindFirstChild("MurderESP")
+    local old = char:FindFirstChild("ArtarioESP")
     if old then old:Destroy() end
     
     local highlight = Instance.new("Highlight")
-    highlight.Name = "MurderESP"
+    highlight.Name = "ArtarioESP"
     highlight.FillColor = EspColor
     highlight.FillTransparency = 0.7
     highlight.OutlineColor = EspColor
@@ -504,7 +622,7 @@ local function ApplyEspToPlayer(otherPlayer)
     local humanoid = char:FindFirstChild("Humanoid")
     if not humanoid or humanoid.Health <= 0 then return end
     
-    if not char:FindFirstChild("MurderESP") then
+    if not char:FindFirstChild("ArtarioESP") then
         local highlight = CreateHighlight(char)
         if highlight then
             EspHighlights[otherPlayer] = highlight
@@ -529,7 +647,7 @@ function DisableEsp()
     EspHighlights = {}
     for _, p in ipairs(game.Players:GetPlayers()) do
         if p.Character then
-            local h = p.Character:FindFirstChild("MurderESP")
+            local h = p.Character:FindFirstChild("ArtarioESP")
             if h then h:Destroy() end
         end
     end
@@ -574,43 +692,41 @@ game.Players.PlayerAdded:Connect(function(p)
     p.CharacterAdded:Connect(function() OnCharacterAdded(p) end)
 end)
 
--- ===== КНОПКИ =====
-EspToggleBtn.MouseButton1Click:Connect(function()
-    if EspActive then DisableEsp() else EnableEsp() end
+-- ===== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК =====
+local function ResetTabs()
+    AimTab.TextColor3 = Color3.fromRGB(200, 200, 200)
+    AimTab.BackgroundTransparency = 1
+    EspTab.TextColor3 = Color3.fromRGB(200, 200, 200)
+    EspTab.BackgroundTransparency = 1
+end
+
+AimTab.MouseButton1Click:Connect(function()
+    ResetTabs()
+    AimTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+    AimTab.BackgroundColor3 = Color3.fromRGB(50, 40, 40)
+    AimTab.BackgroundTransparency = 0.3
+    AimPanel.Visible = true
+    EspPanel.Visible = false
+    PanelTitle.Text = "Аим"
 end)
 
+EspTab.MouseButton1Click:Connect(function()
+    ResetTabs()
+    EspTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+    EspTab.BackgroundColor3 = Color3.fromRGB(50, 40, 40)
+    EspTab.BackgroundTransparency = 0.3
+    AimPanel.Visible = false
+    EspPanel.Visible = true
+    PanelTitle.Text = "ЕСП"
+end)
+
+-- ===== КНОПКИ =====
 HitboxToggleBtn.MouseButton1Click:Connect(function()
     if HitboxActive then DisableHitbox() else EnableHitbox() end
 end)
 
-SizeInput.FocusLost:Connect(function()
-    local val = tonumber(SizeInput.Text)
-    if val and val >= 1 and val <= 100 then
-        HitboxScale = val
-        if HitboxActive then DisableHitbox(); EnableHitbox() end
-    else
-        SizeInput.Text = tostring(HitboxScale)
-    end
-end)
-
--- ===== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК (визуальное) =====
-local function ResetTabs()
-    for _, tab in pairs({TabChar, TabTeleport, TabCombat, TabTrolling, TabWallhack, TabVisual, TabButtons}) do
-        tab.TextColor3 = Color3.fromRGB(200, 200, 200)
-        tab.BackgroundTransparency = 1
-    end
-end
-
-TabVisual.MouseButton1Click:Connect(function()
-    ResetTabs()
-    TabVisual.TextColor3 = Color3.fromRGB(255, 255, 255)
-    PanelTitle.Text = "Визуал"
-end)
-
-TabWallhack.MouseButton1Click:Connect(function()
-    ResetTabs()
-    TabWallhack.TextColor3 = Color3.fromRGB(255, 255, 255)
-    PanelTitle.Text = "Валлхак"
+EspToggleBtn.MouseButton1Click:Connect(function()
+    if EspActive then DisableEsp() else EnableEsp() end
 end)
 
 -- ===== ЗАКРЫТИЕ =====
@@ -628,5 +744,5 @@ MinimizeBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-print("✅ Murder Duels — ThunderHub Style UI загружен!")
+print("✅ ARTARIO HUB загружен! by artar")
 print("H — вкл/выкл хитбоксы")
