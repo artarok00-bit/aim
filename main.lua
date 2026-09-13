@@ -1,6 +1,6 @@
--- [[ Murder Duels — ХИТБОКСЫ + ESP + WALLBANG + HOTKEY ]]
+-- [[ Murder Duels — ХИТБОКСЫ + ESP + БЕССМЕРТИЕ + HOTKEY ]]
 -- H — вкл/выкл хитбоксы
--- Вкладка "🔫 СТРЕЛЬБА" — стрельба сквозь стены
+-- Вкладка "⚙️ ПРОЧЕЕ" — бессмертие
 
 local Player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -20,10 +20,9 @@ local EspActive = false
 local EspColor = Color3.fromRGB(255, 0, 0)
 local EspHighlights = {}
 
--- ===== WALLBANG =====
-local WallbangActive = false
-local OriginalCollisions = {}
-local WallbangRange = 100
+-- ===== БЕССМЕРТИЕ =====
+local GodActive = false
+local GodConnection = nil
 
 -- ===== GUI =====
 local ScreenGui = Instance.new("ScreenGui")
@@ -81,7 +80,7 @@ local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 5)
 CloseCorner.Parent = CloseBtn
 
--- Вкладки (теперь 3)
+-- Вкладки (3)
 local TabBar = Instance.new("Frame")
 TabBar.Size = UDim2.new(1, 0, 0, 35)
 TabBar.Position = UDim2.new(0, 0, 0, 40)
@@ -111,16 +110,16 @@ ViewTab.BorderSizePixel = 0
 ViewTab.Font = Enum.Font.GothamSemibold
 ViewTab.Parent = TabBar
 
-local ShootTab = Instance.new("TextButton")
-ShootTab.Size = UDim2.new(0.33, 0, 1, 0)
-ShootTab.Position = UDim2.new(0.67, 0, 0, 0)
-ShootTab.Text = "🔫 СТРЕЛЬБА"
-ShootTab.TextColor3 = Color3.fromRGB(180, 180, 210)
-ShootTab.TextSize = 12
-ShootTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
-ShootTab.BorderSizePixel = 0
-ShootTab.Font = Enum.Font.GothamSemibold
-ShootTab.Parent = TabBar
+local OtherTab = Instance.new("TextButton")
+OtherTab.Size = UDim2.new(0.33, 0, 1, 0)
+OtherTab.Position = UDim2.new(0.67, 0, 0, 0)
+OtherTab.Text = "⚙️ ПРОЧЕЕ"
+OtherTab.TextColor3 = Color3.fromRGB(180, 180, 210)
+OtherTab.TextSize = 12
+OtherTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
+OtherTab.BorderSizePixel = 0
+OtherTab.Font = Enum.Font.GothamSemibold
+OtherTab.Parent = TabBar
 
 -- Контент
 local Content = Instance.new("Frame")
@@ -343,83 +342,48 @@ for i, c in ipairs(colors) do
     end)
 end
 
--- ===== ВКЛАДКА "СТРЕЛЬБА" =====
-local ShootPanel = Instance.new("Frame")
-ShootPanel.Size = UDim2.new(1, 0, 1, 0)
-ShootPanel.BackgroundTransparency = 1
-ShootPanel.Visible = false
-ShootPanel.Parent = Content
+-- ===== ВКЛАДКА "ПРОЧЕЕ" =====
+local OtherPanel = Instance.new("Frame")
+OtherPanel.Size = UDim2.new(1, 0, 1, 0)
+OtherPanel.BackgroundTransparency = 1
+OtherPanel.Visible = false
+OtherPanel.Parent = Content
 
-local ShootInfo = Instance.new("TextLabel")
-ShootInfo.Size = UDim2.new(0.9, 0, 0, 50)
-ShootInfo.Position = UDim2.new(0.05, 0, 0.03, 0)
-ShootInfo.Text = "🔫 СТРЕЛЬБА СКВОЗЬ СТЕНЫ\n\nОтключает коллизии у стен вокруг\nтебя, чтобы пули проходили сквозь"
-ShootInfo.TextColor3 = Color3.fromRGB(180, 180, 210)
-ShootInfo.TextSize = 12
-ShootInfo.TextXAlignment = Enum.TextXAlignment.Center
-ShootInfo.BackgroundTransparency = 1
-ShootInfo.Font = Enum.Font.Gotham
-ShootInfo.Parent = ShootPanel
+local GodInfo = Instance.new("TextLabel")
+GodInfo.Size = UDim2.new(0.9, 0, 0, 40)
+GodInfo.Position = UDim2.new(0.05, 0, 0.05, 0)
+GodInfo.Text = "🛡️ БЕССМЕРТИЕ\n\nДаёт очень много здоровья"
+GodInfo.TextColor3 = Color3.fromRGB(180, 180, 210)
+GodInfo.TextSize = 12
+GodInfo.TextXAlignment = Enum.TextXAlignment.Center
+GodInfo.BackgroundTransparency = 1
+GodInfo.Font = Enum.Font.Gotham
+GodInfo.Parent = OtherPanel
 
-local WallbangBtn = Instance.new("TextButton")
-WallbangBtn.Size = UDim2.new(0.9, 0, 0, 50)
-WallbangBtn.Position = UDim2.new(0.05, 0, 0.32, 0)
-WallbangBtn.Text = "🔫 ВКЛЮЧИТЬ WALLBANG"
-WallbangBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-WallbangBtn.TextSize = 15
-WallbangBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-WallbangBtn.BorderSizePixel = 0
-WallbangBtn.Font = Enum.Font.GothamBold
-WallbangBtn.Parent = ShootPanel
-local WallbangCorner = Instance.new("UICorner")
-WallbangCorner.CornerRadius = UDim.new(0, 8)
-WallbangCorner.Parent = WallbangBtn
+local GodBtn = Instance.new("TextButton")
+GodBtn.Size = UDim2.new(0.9, 0, 0, 50)
+GodBtn.Position = UDim2.new(0.05, 0, 0.3, 0)
+GodBtn.Text = "🛡️ ВКЛЮЧИТЬ БЕССМЕРТИЕ"
+GodBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+GodBtn.TextSize = 14
+GodBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
+GodBtn.BorderSizePixel = 0
+GodBtn.Font = Enum.Font.GothamBold
+GodBtn.Parent = OtherPanel
+local GodCorner = Instance.new("UICorner")
+GodCorner.CornerRadius = UDim.new(0, 8)
+GodCorner.Parent = GodBtn
 
-local WallbangStatus = Instance.new("TextLabel")
-WallbangStatus.Size = UDim2.new(0.9, 0, 0, 22)
-WallbangStatus.Position = UDim2.new(0.05, 0, 0.57, 0)
-WallbangStatus.Text = "● ВЫКЛЮЧЕНО"
-WallbangStatus.TextColor3 = Color3.fromRGB(200, 80, 80)
-WallbangStatus.TextSize = 13
-WallbangStatus.TextXAlignment = Enum.TextXAlignment.Center
-WallbangStatus.BackgroundTransparency = 1
-WallbangStatus.Font = Enum.Font.Gotham
-WallbangStatus.Parent = ShootPanel
-
-local RangeLabel = Instance.new("TextLabel")
-RangeLabel.Size = UDim2.new(0.9, 0, 0, 20)
-RangeLabel.Position = UDim2.new(0.05, 0, 0.68, 0)
-RangeLabel.Text = "РАДИУС (студов)"
-RangeLabel.TextColor3 = Color3.fromRGB(180, 180, 210)
-RangeLabel.TextSize = 11
-RangeLabel.TextXAlignment = Enum.TextXAlignment.Left
-RangeLabel.BackgroundTransparency = 1
-RangeLabel.Font = Enum.Font.Gotham
-RangeLabel.Parent = ShootPanel
-
-local RangeInput = Instance.new("TextBox")
-RangeInput.Size = UDim2.new(0.9, 0, 0, 35)
-RangeInput.Position = UDim2.new(0.05, 0, 0.75, 0)
-RangeInput.Text = "100"
-RangeInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-RangeInput.TextSize = 15
-RangeInput.BackgroundColor3 = Color3.fromRGB(30, 33, 50)
-RangeInput.BorderSizePixel = 0
-RangeInput.TextXAlignment = Enum.TextXAlignment.Center
-RangeInput.Font = Enum.Font.GothamBold
-RangeInput.Parent = ShootPanel
-local RangeCorner = Instance.new("UICorner")
-RangeCorner.CornerRadius = UDim.new(0, 6)
-RangeCorner.Parent = RangeInput
-
-RangeInput.FocusLost:Connect(function()
-    local val = tonumber(RangeInput.Text)
-    if val and val >= 10 and val <= 1000 then
-        WallbangRange = val
-    else
-        RangeInput.Text = tostring(WallbangRange)
-    end
-end)
+local GodStatus = Instance.new("TextLabel")
+GodStatus.Size = UDim2.new(0.9, 0, 0, 22)
+GodStatus.Position = UDim2.new(0.05, 0, 0.55, 0)
+GodStatus.Text = "● ВЫКЛЮЧЕНО"
+GodStatus.TextColor3 = Color3.fromRGB(200, 80, 80)
+GodStatus.TextSize = 13
+GodStatus.TextXAlignment = Enum.TextXAlignment.Center
+GodStatus.BackgroundTransparency = 1
+GodStatus.Font = Enum.Font.Gotham
+GodStatus.Parent = OtherPanel
 
 -- ===== ФУНКЦИИ =====
 local function GetHitboxParts(char)
@@ -551,66 +515,61 @@ function DisableEsp()
     EspStatus.TextColor3 = Color3.fromRGB(200, 80, 80)
 end
 
--- ===== WALLBANG =====
-local function ApplyWallbang()
-    local myChar = Player.Character
-    if not myChar then return end
-    local myRoot = myChar:FindFirstChild("HumanoidRootPart")
-    if not myRoot then return end
-    local myPos = myRoot.Position
+-- ===== БЕССМЕРТИЕ =====
+local function EnableGod()
+    GodActive = true
+    GodBtn.Text = "🛡️ ВЫКЛЮЧИТЬ БЕССМЕРТИЕ"
+    GodBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
+    GodStatus.Text = "● ВКЛЮЧЕНО"
+    GodStatus.TextColor3 = Color3.fromRGB(100, 200, 100)
     
-    for _, part in ipairs(workspace:GetDescendants()) do
-        if part:IsA("BasePart") and part.Anchored then
-            -- Пропускаем своего персонажа
-            if not part:IsDescendantOf(myChar) then
-                -- Пропускаем персонажей игроков
-                local isPlayerPart = false
-                for _, p in ipairs(game.Players:GetPlayers()) do
-                    if p.Character and part:IsDescendantOf(p.Character) then
-                        isPlayerPart = true
-                        break
-                    end
-                end
-                
-                if not isPlayerPart then
-                    local dist = (part.Position - myPos).Magnitude
-                    if dist <= WallbangRange then
-                        if not OriginalCollisions[part] then
-                            OriginalCollisions[part] = part.CanCollide
-                            part.CanCollide = false
-                        end
-                    end
-                end
-            end
+    -- Мгновенно ставим здоровье
+    local char = Player.Character
+    if char then
+        local humanoid = char:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.MaxHealth = math.huge
+            humanoid.Health = math.huge
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
         end
     end
+    
+    -- Постоянно поддерживаем бессмертие
+    if GodConnection then GodConnection:Disconnect() end
+    GodConnection = RunService.Heartbeat:Connect(function()
+        if not GodActive then return end
+        local char = Player.Character
+        if not char then return end
+        local humanoid = char:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.MaxHealth = math.huge
+            humanoid.Health = math.huge
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+        end
+    end)
 end
 
-local function RestoreWallbang()
-    for part, data in pairs(OriginalCollisions) do
-        if part and part.Parent then
-            part.CanCollide = data
+local function DisableGod()
+    GodActive = false
+    GodBtn.Text = "🛡️ ВКЛЮЧИТЬ БЕССМЕРТИЕ"
+    GodBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
+    GodStatus.Text = "● ВЫКЛЮЧЕНО"
+    GodStatus.TextColor3 = Color3.fromRGB(200, 80, 80)
+    
+    if GodConnection then
+        GodConnection:Disconnect()
+        GodConnection = nil
+    end
+    
+    local char = Player.Character
+    if char then
+        local humanoid = char:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.MaxHealth = 100
+            humanoid.Health = 100
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
         end
     end
-    OriginalCollisions = {}
-end
-
-function EnableWallbang()
-    WallbangActive = true
-    ApplyWallbang()
-    WallbangBtn.Text = "🔫 ВЫКЛЮЧИТЬ WALLBANG"
-    WallbangBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
-    WallbangStatus.Text = "● ВКЛЮЧЕНО (радиус " .. WallbangRange .. ")"
-    WallbangStatus.TextColor3 = Color3.fromRGB(100, 200, 100)
-end
-
-function DisableWallbang()
-    WallbangActive = false
-    RestoreWallbang()
-    WallbangBtn.Text = "🔫 ВКЛЮЧИТЬ WALLBANG"
-    WallbangBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-    WallbangStatus.Text = "● ВЫКЛЮЧЕНО"
-    WallbangStatus.TextColor3 = Color3.fromRGB(200, 80, 80)
 end
 
 -- ===== 🔥 ГОРЯЧАЯ КЛАВИША H =====
@@ -641,9 +600,21 @@ task.spawn(function()
                 ApplyHitboxToPlayer(otherPlayer)
             end
         end
-        
-        if WallbangActive then
-            ApplyWallbang()
+    end
+end)
+
+-- ===== ВОССТАНОВЛЕНИЕ ПОСЛЕ РЕСПАВНА =====
+Player.CharacterAdded:Connect(function()
+    task.wait(1)
+    if GodActive then
+        local char = Player.Character
+        if char then
+            local humanoid = char:FindFirstChild("Humanoid")
+            if humanoid then
+                humanoid.MaxHealth = math.huge
+                humanoid.Health = math.huge
+                humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+            end
         end
     end
 end)
@@ -673,33 +644,33 @@ end)
 HitboxTab.MouseButton1Click:Connect(function()
     HitboxPanel.Visible = true
     ViewPanel.Visible = false
-    ShootPanel.Visible = false
+    OtherPanel.Visible = false
     HitboxTab.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
     HitboxTab.TextColor3 = Color3.fromRGB(255, 255, 255)
     ViewTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
     ViewTab.TextColor3 = Color3.fromRGB(180, 180, 210)
-    ShootTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
-    ShootTab.TextColor3 = Color3.fromRGB(180, 180, 210)
+    OtherTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
+    OtherTab.TextColor3 = Color3.fromRGB(180, 180, 210)
 end)
 
 ViewTab.MouseButton1Click:Connect(function()
     HitboxPanel.Visible = false
     ViewPanel.Visible = true
-    ShootPanel.Visible = false
+    OtherPanel.Visible = false
     ViewTab.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
     ViewTab.TextColor3 = Color3.fromRGB(255, 255, 255)
     HitboxTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
     HitboxTab.TextColor3 = Color3.fromRGB(180, 180, 210)
-    ShootTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
-    ShootTab.TextColor3 = Color3.fromRGB(180, 180, 210)
+    OtherTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
+    OtherTab.TextColor3 = Color3.fromRGB(180, 180, 210)
 end)
 
-ShootTab.MouseButton1Click:Connect(function()
+OtherTab.MouseButton1Click:Connect(function()
     HitboxPanel.Visible = false
     ViewPanel.Visible = false
-    ShootPanel.Visible = true
-    ShootTab.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
-    ShootTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+    OtherPanel.Visible = true
+    OtherTab.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
+    OtherTab.TextColor3 = Color3.fromRGB(255, 255, 255)
     HitboxTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
     HitboxTab.TextColor3 = Color3.fromRGB(180, 180, 210)
     ViewTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
@@ -715,15 +686,15 @@ EspBtn.MouseButton1Click:Connect(function()
     if EspActive then DisableEsp() else EnableEsp() end
 end)
 
-WallbangBtn.MouseButton1Click:Connect(function()
-    if WallbangActive then DisableWallbang() else EnableWallbang() end
+GodBtn.MouseButton1Click:Connect(function()
+    if GodActive then DisableGod() else EnableGod() end
 end)
 
 CloseBtn.MouseButton1Click:Connect(function()
     if HitboxActive then DisableHitbox() end
     if EspActive then DisableEsp() end
-    if WallbangActive then DisableWallbang() end
+    if GodActive then DisableGod() end
     ScreenGui:Destroy()
 end)
 
-print("✅ Murder Duels загружено! Хитбоксы + ESP + Wallbang. H — вкл/выкл хитбоксы")
+print("✅ Murder Duels загружено! Хитбоксы + ESP + Бессмертие. H — вкл/выкл хитбоксы")
