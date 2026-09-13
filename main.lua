@@ -1,5 +1,4 @@
--- [[ Murder Duels — ХИТБОКС ГОЛОВЫ + ESP + HOTKEY ]]
--- Увеличивает ТОЛЬКО голову врагов (всех, кроме себя)
+-- [[ Murder Duels — ХИТБОКС ГОЛОВЫ (универсальный) + ESP + HOTKEY ]]
 -- H — вкл/выкл хитбокс головы
 
 local Player = game.Players.LocalPlayer
@@ -7,7 +6,7 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 -- ===== НАСТРОЙКИ =====
-local CheckInterval = 0.3
+local CheckInterval = 0.2
 local HitboxHotkey = Enum.KeyCode.H
 
 -- ===== ХИТБОКС =====
@@ -328,30 +327,62 @@ end
 -- ===== УНИВЕРСАЛЬНЫЙ ПОИСК ГОЛОВЫ =====
 local function GetHeadParts(char)
     local heads = {}
-    -- Стандартная голова
+    local added = {} -- чтобы не добавлять одно и то же
+
+    -- 1. Стандартная голова
     local head = char:FindFirstChild("Head")
     if head and head:IsA("BasePart") then
         table.insert(heads, head)
+        added[head] = true
     end
-    -- Если нет — ищем все части с "head" в имени
+
+    -- 2. Все части с "head" в имени
     for _, part in ipairs(char:GetDescendants()) do
-        if part:IsA("BasePart") and string.find(string.lower(part.Name), "head") then
-            if not table.find(heads, part) then
+        if part:IsA("BasePart") and not added[part] then
+            local n = string.lower(part.Name)
+            if string.find(n, "head") then
                 table.insert(heads, part)
+                added[part] = true
             end
         end
     end
-    -- Если всё ещё пусто — берём части выше HumanoidRootPart
+
+    -- 3. Все аксессуары на голове (Hat, Hair, Accessory)
+    for _, obj in ipairs(char:GetChildren()) do
+        if obj:IsA("Accessory") or string.find(string.lower(obj.Name), "hat") or string.find(string.lower(obj.Name), "hair") then
+            for _, part in ipairs(obj:GetDescendants()) do
+                if part:IsA("BasePart") and not added[part] then
+                    table.insert(heads, part)
+                    added[part] = true
+                end
+            end
+        end
+    end
+
+    -- 4. Если ничего не нашли — берём части выше HumanoidRootPart
     if #heads == 0 then
         local root = char:FindFirstChild("HumanoidRootPart")
         if root then
             for _, part in ipairs(char:GetChildren()) do
-                if part:IsA("BasePart") and part.Position.Y > root.Position.Y + 1 then
+                if part:IsA("BasePart") and part.Position.Y > root.Position.Y + 0.5 then
                     table.insert(heads, part)
                 end
             end
         end
     end
+
+    -- 5. Если всё ещё пусто — берём ВСЕ BasePart выше 2 студов от корня
+    if #heads == 0 then
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if root then
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") and (part.Position.Y - root.Position.Y) > 2 then
+                    table.insert(heads, part)
+                end
+            end
+        end
+    end
+
     return heads
 end
 
@@ -370,6 +401,24 @@ local function ApplyHitboxToPlayer(otherPlayer)
     end
 end
 
+-- Также применяем ко всем NPC (не игрокам)
+local function ApplyHitboxToNPCs()
+    for _, obj in ipairs(workspace:GetChildren()) do
+        if obj:IsA("Model") and not game.Players:GetPlayerFromCharacter(obj) then
+            local humanoid = obj:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                local heads = GetHeadParts(obj)
+                for _, head in ipairs(heads) do
+                    if not OriginalSizes[head] then
+                        OriginalSizes[head] = {Size = head.Size}
+                        head.Size = head.Size * HitboxScale
+                    end
+                end
+            end
+        end
+    end
+end
+
 function EnableHitbox()
     HitboxActive = true
     OriginalSizes = {}
@@ -377,6 +426,7 @@ function EnableHitbox()
     for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
         ApplyHitboxToPlayer(otherPlayer)
     end
+    ApplyHitboxToNPCs()
     
     HitboxBtn.Text = "🎯 ВЫКЛЮЧИТЬ ХИТБОКС ГОЛОВЫ"
     HitboxBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
@@ -434,6 +484,16 @@ local function ApplyEspToPlayer(otherPlayer)
     end
 end
 
+local function ApplyEspToNPCs()
+    for _, obj in ipairs(workspace:GetChildren()) do
+        if obj:IsA("Model") and not game.Players:GetPlayerFromCharacter(obj) then
+            if obj:FindFirstChildOfClass("Humanoid") and not obj:FindFirstChild("MurderESP") then
+                CreateHighlight(obj)
+            end
+        end
+    end
+end
+
 function EnableEsp()
     EspActive = true
     EspHighlights = {}
@@ -441,6 +501,7 @@ function EnableEsp()
     for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
         ApplyEspToPlayer(otherPlayer)
     end
+    ApplyEspToNPCs()
     
     EspBtn.Text = "👁 ВЫКЛЮЧИТЬ ESP"
     EspBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
@@ -461,6 +522,12 @@ function DisableEsp()
     for _, p in ipairs(game.Players:GetPlayers()) do
         if p.Character then
             local h = p.Character:FindFirstChild("MurderESP")
+            if h then h:Destroy() end
+        end
+    end
+    for _, obj in ipairs(workspace:GetChildren()) do
+        if obj:IsA("Model") then
+            local h = obj:FindFirstChild("MurderESP")
             if h then h:Destroy() end
         end
     end
@@ -490,10 +557,12 @@ task.spawn(function()
         
         if EspActive then
             for _, p in ipairs(game.Players:GetPlayers()) do ApplyEspToPlayer(p) end
+            ApplyEspToNPCs()
         end
         
         if HitboxActive then
             for _, p in ipairs(game.Players:GetPlayers()) do ApplyHitboxToPlayer(p) end
+            ApplyHitboxToNPCs()
         end
     end
 end)
@@ -553,4 +622,4 @@ CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
-print("✅ Murder Duels загружено! Хитбокс ТОЛЬКО на голову. H — вкл/выкл")
+print("✅ Murder Duels загружено! Универсальный хитбокс головы + NPC. H — вкл/выкл")
