@@ -1,6 +1,5 @@
--- [[ Murder Duels — ХИТБОКСЫ + ESP + БЕССМЕРТИЕ + HOTKEY ]]
--- H — вкл/выкл хитбоксы
--- Вкладка "⚙️ ПРОЧЕЕ" — бессмертие
+-- [[ Murder Duels — ХИТБОКСЫ (до 100) + ESP (авто-обновление) + HOTKEY ]]
+-- H — включить/выключить хитбоксы
 
 local Player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -8,7 +7,7 @@ local UserInputService = game:GetService("UserInputService")
 
 -- ===== НАСТРОЙКИ =====
 local CheckInterval = 0.5
-local HitboxHotkey = Enum.KeyCode.H
+local HitboxHotkey = Enum.KeyCode.H -- 🔥 ГОРЯЧАЯ КЛАВИША
 
 -- ===== ХИТБОКСЫ =====
 local HitboxScale = 3
@@ -19,10 +18,6 @@ local OriginalSizes = {}
 local EspActive = false
 local EspColor = Color3.fromRGB(255, 0, 0)
 local EspHighlights = {}
-
--- ===== БЕССМЕРТИЕ =====
-local GodActive = false
-local GodConnection = nil
 
 -- ===== GUI =====
 local ScreenGui = Instance.new("ScreenGui")
@@ -80,7 +75,7 @@ local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 5)
 CloseCorner.Parent = CloseBtn
 
--- Вкладки (3)
+-- Вкладки
 local TabBar = Instance.new("Frame")
 TabBar.Size = UDim2.new(1, 0, 0, 35)
 TabBar.Position = UDim2.new(0, 0, 0, 40)
@@ -89,37 +84,25 @@ TabBar.BorderSizePixel = 0
 TabBar.Parent = MainFrame
 
 local HitboxTab = Instance.new("TextButton")
-HitboxTab.Size = UDim2.new(0.34, 0, 1, 0)
-HitboxTab.Position = UDim2.new(0, 0, 0, 0)
-HitboxTab.Text = "📦 ХИТБОКС"
+HitboxTab.Size = UDim2.new(0.5, 0, 1, 0)
+HitboxTab.Text = "📦 ХИТБОКСЫ"
 HitboxTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-HitboxTab.TextSize = 12
+HitboxTab.TextSize = 13
 HitboxTab.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
 HitboxTab.BorderSizePixel = 0
 HitboxTab.Font = Enum.Font.GothamSemibold
 HitboxTab.Parent = TabBar
 
 local ViewTab = Instance.new("TextButton")
-ViewTab.Size = UDim2.new(0.33, 0, 1, 0)
-ViewTab.Position = UDim2.new(0.34, 0, 0, 0)
+ViewTab.Size = UDim2.new(0.5, 0, 1, 0)
+ViewTab.Position = UDim2.new(0.5, 0, 0, 0)
 ViewTab.Text = "👁 ВИД"
 ViewTab.TextColor3 = Color3.fromRGB(180, 180, 210)
-ViewTab.TextSize = 12
+ViewTab.TextSize = 13
 ViewTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
 ViewTab.BorderSizePixel = 0
 ViewTab.Font = Enum.Font.GothamSemibold
 ViewTab.Parent = TabBar
-
-local OtherTab = Instance.new("TextButton")
-OtherTab.Size = UDim2.new(0.33, 0, 1, 0)
-OtherTab.Position = UDim2.new(0.67, 0, 0, 0)
-OtherTab.Text = "⚙️ ПРОЧЕЕ"
-OtherTab.TextColor3 = Color3.fromRGB(180, 180, 210)
-OtherTab.TextSize = 12
-OtherTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
-OtherTab.BorderSizePixel = 0
-OtherTab.Font = Enum.Font.GothamSemibold
-OtherTab.Parent = TabBar
 
 -- Контент
 local Content = Instance.new("Frame")
@@ -128,7 +111,7 @@ Content.Position = UDim2.new(0, 0, 0, 75)
 Content.BackgroundTransparency = 1
 Content.Parent = MainFrame
 
--- ===== ВКЛАДКА "ХИТБОКС" =====
+-- ===== ВКЛАДКА "ХИТБОКСЫ" =====
 local HitboxPanel = Instance.new("Frame")
 HitboxPanel.Size = UDim2.new(1, 0, 1, 0)
 HitboxPanel.BackgroundTransparency = 1
@@ -159,6 +142,7 @@ local HitboxCorner = Instance.new("UICorner")
 HitboxCorner.CornerRadius = UDim.new(0, 8)
 HitboxCorner.Parent = HitboxBtn
 
+-- 🔥 ПОДСКАЗКА ПРО ГОРЯЧУЮ КЛАВИШУ
 local HotkeyHint = Instance.new("TextLabel")
 HotkeyHint.Size = UDim2.new(0.9, 0, 0, 18)
 HotkeyHint.Position = UDim2.new(0.05, 0, 0.42, 0)
@@ -342,49 +326,6 @@ for i, c in ipairs(colors) do
     end)
 end
 
--- ===== ВКЛАДКА "ПРОЧЕЕ" =====
-local OtherPanel = Instance.new("Frame")
-OtherPanel.Size = UDim2.new(1, 0, 1, 0)
-OtherPanel.BackgroundTransparency = 1
-OtherPanel.Visible = false
-OtherPanel.Parent = Content
-
-local GodInfo = Instance.new("TextLabel")
-GodInfo.Size = UDim2.new(0.9, 0, 0, 40)
-GodInfo.Position = UDim2.new(0.05, 0, 0.05, 0)
-GodInfo.Text = "🛡️ БЕССМЕРТИЕ\n\nДаёт очень много здоровья"
-GodInfo.TextColor3 = Color3.fromRGB(180, 180, 210)
-GodInfo.TextSize = 12
-GodInfo.TextXAlignment = Enum.TextXAlignment.Center
-GodInfo.BackgroundTransparency = 1
-GodInfo.Font = Enum.Font.Gotham
-GodInfo.Parent = OtherPanel
-
-local GodBtn = Instance.new("TextButton")
-GodBtn.Size = UDim2.new(0.9, 0, 0, 50)
-GodBtn.Position = UDim2.new(0.05, 0, 0.3, 0)
-GodBtn.Text = "🛡️ ВКЛЮЧИТЬ БЕССМЕРТИЕ"
-GodBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-GodBtn.TextSize = 14
-GodBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
-GodBtn.BorderSizePixel = 0
-GodBtn.Font = Enum.Font.GothamBold
-GodBtn.Parent = OtherPanel
-local GodCorner = Instance.new("UICorner")
-GodCorner.CornerRadius = UDim.new(0, 8)
-GodCorner.Parent = GodBtn
-
-local GodStatus = Instance.new("TextLabel")
-GodStatus.Size = UDim2.new(0.9, 0, 0, 22)
-GodStatus.Position = UDim2.new(0.05, 0, 0.55, 0)
-GodStatus.Text = "● ВЫКЛЮЧЕНО"
-GodStatus.TextColor3 = Color3.fromRGB(200, 80, 80)
-GodStatus.TextSize = 13
-GodStatus.TextXAlignment = Enum.TextXAlignment.Center
-GodStatus.BackgroundTransparency = 1
-GodStatus.Font = Enum.Font.Gotham
-GodStatus.Parent = OtherPanel
-
 -- ===== ФУНКЦИИ =====
 local function GetHitboxParts(char)
     local parts = {}
@@ -515,63 +456,6 @@ function DisableEsp()
     EspStatus.TextColor3 = Color3.fromRGB(200, 80, 80)
 end
 
--- ===== БЕССМЕРТИЕ =====
-local function EnableGod()
-    GodActive = true
-    GodBtn.Text = "🛡️ ВЫКЛЮЧИТЬ БЕССМЕРТИЕ"
-    GodBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
-    GodStatus.Text = "● ВКЛЮЧЕНО"
-    GodStatus.TextColor3 = Color3.fromRGB(100, 200, 100)
-    
-    -- Мгновенно ставим здоровье
-    local char = Player.Character
-    if char then
-        local humanoid = char:FindFirstChild("Humanoid")
-        if humanoid then
-            humanoid.MaxHealth = math.huge
-            humanoid.Health = math.huge
-            humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-        end
-    end
-    
-    -- Постоянно поддерживаем бессмертие
-    if GodConnection then GodConnection:Disconnect() end
-    GodConnection = RunService.Heartbeat:Connect(function()
-        if not GodActive then return end
-        local char = Player.Character
-        if not char then return end
-        local humanoid = char:FindFirstChild("Humanoid")
-        if humanoid then
-            humanoid.MaxHealth = math.huge
-            humanoid.Health = math.huge
-            humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-        end
-    end)
-end
-
-local function DisableGod()
-    GodActive = false
-    GodBtn.Text = "🛡️ ВКЛЮЧИТЬ БЕССМЕРТИЕ"
-    GodBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
-    GodStatus.Text = "● ВЫКЛЮЧЕНО"
-    GodStatus.TextColor3 = Color3.fromRGB(200, 80, 80)
-    
-    if GodConnection then
-        GodConnection:Disconnect()
-        GodConnection = nil
-    end
-    
-    local char = Player.Character
-    if char then
-        local humanoid = char:FindFirstChild("Humanoid")
-        if humanoid then
-            humanoid.MaxHealth = 100
-            humanoid.Health = 100
-            humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
-        end
-    end
-end
-
 -- ===== 🔥 ГОРЯЧАЯ КЛАВИША H =====
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
@@ -603,22 +487,6 @@ task.spawn(function()
     end
 end)
 
--- ===== ВОССТАНОВЛЕНИЕ ПОСЛЕ РЕСПАВНА =====
-Player.CharacterAdded:Connect(function()
-    task.wait(1)
-    if GodActive then
-        local char = Player.Character
-        if char then
-            local humanoid = char:FindFirstChild("Humanoid")
-            if humanoid then
-                humanoid.MaxHealth = math.huge
-                humanoid.Health = math.huge
-                humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-            end
-        end
-    end
-end)
-
 -- ===== ОТСЛЕЖИВАНИЕ НОВЫХ ПЕРСОНАЖЕЙ =====
 local function OnCharacterAdded(otherPlayer)
     task.wait(1)
@@ -644,37 +512,19 @@ end)
 HitboxTab.MouseButton1Click:Connect(function()
     HitboxPanel.Visible = true
     ViewPanel.Visible = false
-    OtherPanel.Visible = false
     HitboxTab.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
     HitboxTab.TextColor3 = Color3.fromRGB(255, 255, 255)
     ViewTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
     ViewTab.TextColor3 = Color3.fromRGB(180, 180, 210)
-    OtherTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
-    OtherTab.TextColor3 = Color3.fromRGB(180, 180, 210)
 end)
 
 ViewTab.MouseButton1Click:Connect(function()
     HitboxPanel.Visible = false
     ViewPanel.Visible = true
-    OtherPanel.Visible = false
     ViewTab.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
     ViewTab.TextColor3 = Color3.fromRGB(255, 255, 255)
     HitboxTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
     HitboxTab.TextColor3 = Color3.fromRGB(180, 180, 210)
-    OtherTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
-    OtherTab.TextColor3 = Color3.fromRGB(180, 180, 210)
-end)
-
-OtherTab.MouseButton1Click:Connect(function()
-    HitboxPanel.Visible = false
-    ViewPanel.Visible = false
-    OtherPanel.Visible = true
-    OtherTab.BackgroundColor3 = Color3.fromRGB(50, 200, 120)
-    OtherTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-    HitboxTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
-    HitboxTab.TextColor3 = Color3.fromRGB(180, 180, 210)
-    ViewTab.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
-    ViewTab.TextColor3 = Color3.fromRGB(180, 180, 210)
 end)
 
 -- ===== КНОПКИ =====
@@ -686,15 +536,10 @@ EspBtn.MouseButton1Click:Connect(function()
     if EspActive then DisableEsp() else EnableEsp() end
 end)
 
-GodBtn.MouseButton1Click:Connect(function()
-    if GodActive then DisableGod() else EnableGod() end
-end)
-
 CloseBtn.MouseButton1Click:Connect(function()
     if HitboxActive then DisableHitbox() end
     if EspActive then DisableEsp() end
-    if GodActive then DisableGod() end
     ScreenGui:Destroy()
 end)
 
-print("✅ Murder Duels загружено! Хитбоксы + ESP + Бессмертие. H — вкл/выкл хитбоксы")
+print("✅ Murder Duels загружено! H — вкл/выкл хитбоксы")
