@@ -8,8 +8,9 @@ local TweenService = game:GetService("TweenService")
 
 -- ===== НАСТРОЙКИ =====
 local CheckInterval = 0.5
-local HitboxHotkey = Enum.KeyCode.H -- 🔥 горячая клавиша по умолчанию
+local HitboxHotkey = Enum.KeyCode.H
 local SettingKeybind = false
+local MenuClosed = false -- 🔥 ФЛАГ: меню закрыто = всё выключено
 
 -- ===== ХИТБОКСЫ =====
 local HitboxScale = 3
@@ -44,7 +45,6 @@ local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 14)
 MainCorner.Parent = MainFrame
 
--- Фон
 local BackgroundImage = Instance.new("ImageLabel")
 BackgroundImage.Size = UDim2.new(1, 0, 1, 0)
 BackgroundImage.BackgroundTransparency = 1
@@ -131,25 +131,27 @@ local VersionCorner = Instance.new("UICorner")
 VersionCorner.CornerRadius = UDim.new(0, 14)
 VersionCorner.Parent = VersionBadge
 
+-- Свернуть
 local MinimizeBtn = Instance.new("TextButton")
 MinimizeBtn.Size = UDim2.new(0, 30, 0, 30)
 MinimizeBtn.Position = UDim2.new(1, -75, 0.15, 0)
 MinimizeBtn.Text = "—"
 MinimizeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-MinimizeBtn.TextSize = 16
+MinimizeBtn.TextSize = 18
 MinimizeBtn.BackgroundTransparency = 1
-MinimizeBtn.Font = Enum.Font.Gotham
+MinimizeBtn.Font = Enum.Font.GothamBold
 MinimizeBtn.ZIndex = 6
 MinimizeBtn.Parent = TopBar
 
+-- 🔥 КРЕСТИК ИСПРАВЛЕН — используем × (более совместимый) + GothamBold
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 30, 0, 30)
 CloseBtn.Position = UDim2.new(1, -40, 0.15, 0)
-CloseBtn.Text = "✕"
-CloseBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-CloseBtn.TextSize = 14
+CloseBtn.Text = "×" -- 🔥 заменено с ✕ на ×
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextSize = 22
 CloseBtn.BackgroundTransparency = 1
-CloseBtn.Font = Enum.Font.Gotham
+CloseBtn.Font = Enum.Font.GothamBold -- 🔥 жирный шрифт для чёткости
 CloseBtn.ZIndex = 6
 CloseBtn.Parent = TopBar
 
@@ -167,7 +169,6 @@ local SidebarCorner = Instance.new("UICorner")
 SidebarCorner.CornerRadius = UDim.new(0, 10)
 SidebarCorner.Parent = Sidebar
 
--- Вкладка АИМ
 local AimTab = Instance.new("TextButton")
 AimTab.Size = UDim2.new(0.9, 0, 0, 32)
 AimTab.Position = UDim2.new(0.05, 0, 0, 15)
@@ -186,7 +187,6 @@ local AimCorner = Instance.new("UICorner")
 AimCorner.CornerRadius = UDim.new(0, 6)
 AimCorner.Parent = AimTab
 
--- Вкладка ЕСП
 local EspTab = Instance.new("TextButton")
 EspTab.Size = UDim2.new(0.9, 0, 0, 32)
 EspTab.Position = UDim2.new(0.05, 0, 0, 53)
@@ -334,7 +334,6 @@ SizeValue.Font = Enum.Font.GothamBold
 SizeValue.ZIndex = 7
 SizeValue.Parent = SizeCard
 
--- Быстрые кнопки размера (3, 10, 30, 50, 100)
 local QuickFrame = Instance.new("Frame")
 QuickFrame.Size = UDim2.new(0.9, 0, 0, 32)
 QuickFrame.Position = UDim2.new(0.05, 0, 0.5, 0)
@@ -397,7 +396,6 @@ KeybindTitle.Font = Enum.Font.GothamSemibold
 KeybindTitle.ZIndex = 7
 KeybindTitle.Parent = KeybindCard
 
--- Кнопка выбора клавиши
 local KeybindBtn = Instance.new("TextButton")
 KeybindBtn.Size = UDim2.new(0.25, 0, 0, 32)
 KeybindBtn.Position = UDim2.new(0.7, 0, 0.5, -16)
@@ -423,7 +421,6 @@ EspPanel.Visible = false
 EspPanel.ZIndex = 5
 EspPanel.Parent = RightPanel
 
--- Карточка ESP
 local EspCard = Instance.new("Frame")
 EspCard.Size = UDim2.new(0.95, 0, 0, 80)
 EspCard.Position = UDim2.new(0.025, 0, 0.1, 0)
@@ -492,7 +489,6 @@ EspToggleBtn.Text = ""
 EspToggleBtn.ZIndex = 9
 EspToggleBtn.Parent = EspCard
 
--- Карточка Цвет ESP
 local EspColorCard = Instance.new("Frame")
 EspColorCard.Size = UDim2.new(0.95, 0, 0, 80)
 EspColorCard.Position = UDim2.new(0.025, 0, 0.35, 0)
@@ -526,10 +522,10 @@ ColorsFrame.ZIndex = 7
 ColorsFrame.Parent = EspColorCard
 
 local espColors = {
-    {color = Color3.fromRGB(0, 255, 0)},
-    {color = Color3.fromRGB(0, 150, 255)},
-    {color = Color3.fromRGB(180, 0, 255)},
-    {color = Color3.fromRGB(255, 0, 0)}
+    Color3.fromRGB(0, 255, 0),
+    Color3.fromRGB(0, 150, 255),
+    Color3.fromRGB(180, 0, 255),
+    Color3.fromRGB(255, 0, 0)
 }
 
 for i, c in ipairs(espColors) do
@@ -537,7 +533,7 @@ for i, c in ipairs(espColors) do
     colorBtn.Size = UDim2.new(0.22, 0, 1, 0)
     colorBtn.Position = UDim2.new((i-1) * 0.26, 0, 0, 0)
     colorBtn.Text = ""
-    colorBtn.BackgroundColor3 = c.color
+    colorBtn.BackgroundColor3 = c
     colorBtn.BorderSizePixel = 0
     colorBtn.ZIndex = 8
     colorBtn.Parent = ColorsFrame
@@ -547,7 +543,7 @@ for i, c in ipairs(espColors) do
     colorCorner.Parent = colorBtn
     
     colorBtn.MouseButton1Click:Connect(function()
-        EspColor = c.color
+        EspColor = c
         for _, h in pairs(EspHighlights) do
             if h and h.Parent then
                 h.FillColor = EspColor
@@ -679,8 +675,8 @@ end
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
+    if MenuClosed then return end -- 🔥 если меню закрыто — игнорируем
     
-    -- Режим выбора клавиши
     if SettingKeybind then
         if input.KeyCode ~= Enum.KeyCode.Unknown then
             HitboxHotkey = input.KeyCode
@@ -692,7 +688,6 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
         return
     end
     
-    -- Обычная горячая клавиша
     if input.KeyCode == HitboxHotkey then
         if HitboxActive then DisableHitbox() else EnableHitbox() end
     end
@@ -700,7 +695,7 @@ end)
 
 -- ===== ГЛАВНЫЙ ЦИКЛ =====
 task.spawn(function()
-    while ScreenGui.Parent do
+    while ScreenGui.Parent and not MenuClosed do
         task.wait(CheckInterval)
         if EspActive then
             for _, p in ipairs(game.Players:GetPlayers()) do ApplyEspToPlayer(p) end
@@ -714,6 +709,7 @@ end)
 -- ===== НОВЫЕ ПЕРСОНАЖИ =====
 local function OnCharacterAdded(otherPlayer)
     task.wait(1)
+    if MenuClosed then return end
     if EspActive then ApplyEspToPlayer(otherPlayer) end
     if HitboxActive then ApplyHitboxToPlayer(otherPlayer) end
 end
@@ -732,14 +728,4 @@ end)
 local function ResetTabs()
     AimTab.TextColor3 = Color3.fromRGB(200, 200, 200)
     AimTab.BackgroundTransparency = 1
-    EspTab.TextColor3 = Color3.fromRGB(200, 200, 200)
-    EspTab.BackgroundTransparency = 1
-end
-
-AimTab.MouseButton1Click:Connect(function()
-    ResetTabs()
-    AimTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-    AimTab.BackgroundColor3 = Color3.fromRGB(50, 40, 40)
-    AimTab.BackgroundTransparency = 0.3
-    AimPanel.Visible = true
-    EspPanel.
+    EspTab.TextColor3 = Color3.fromRGB(200
